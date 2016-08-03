@@ -1,0 +1,1 @@
+something about the upgrade to processing 3.1.1 causing the flocking sim to grind to a halt - something about how callables are instanced/executed during draw under processing 3.1.1 from 3.0.? (think it's 2)
