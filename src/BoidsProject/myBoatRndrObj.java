@@ -3,22 +3,22 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PShape;
 
+//build a registered pre-rendered instantiatable object for each boat - speeds up display by orders of magnitude
 public class myBoatRndrObj {
 	//boat construction variables
-	public final static myPointf[][] boatVerts = new myPointf[5][12];						//body of boat, amsts 	
-	public Project2 p;	
-	public myPointf[] pts3, pts5, pts7, uvAra;
-	public flkVrs fv;
+	private final static myPointf[][] boatVerts = new myPointf[5][12];						//body of boat, amsts 	
+	private Project2 p;	
+	private myPointf[] pts3, pts5, pts7, uvAra;
+	private flkVrs fv;
 	private static boolean made = false;
-	public static myPointf[] boatBody;
-	public static myPointf[][] boatRndr, boatMasts;
+	private static myPointf[][] boatRndr;	
+	//precalc consts
+	private final float pi4thrds = 4*PConstants.PI/3.0f, pi100th = .01f*PConstants.PI, pi6ths = PConstants.PI/6.0f, pi3rds = PConstants.PI/3.0f;
 	
-	public final float pi4thrds = 4*PConstants.PI/3.0f, pi100th = .01f*PConstants.PI, pi6ths = PConstants.PI/6.0f, pi3rds = PConstants.PI/3.0f;
+	private final int numOars = 5, numAnimFrm = 30;
 	
-	public final int numOars = 5, numAnimFrm = 30;
-	
-	public static PShape[] poles, boat;								//1 shape for each type of boat
-	public static PShape[][] oars;										//1 array for each type of boat, 1 element for each animation frame of oar motion
+	private static PShape[] poles, boat;								//1 shape for each type of boat
+	private static PShape[][] oars;										//1 array for each type of boat, 1 element for each animation frame of oar motion
 	
 	public myBoatRndrObj( Project2 _p, flkVrs _fv) {
 		p=_p; fv = _fv;
@@ -66,7 +66,7 @@ public class myBoatRndrObj {
 				new myPointf(-3f,len*.1f,1.5f),new myPointf(-1.5f,len*.1f,1.5f)};
 		return res;
 	}
-
+	//build masts and oars(multiple orientations in a list to just show specific frames)
 	private void initBoatMasts(){	
 		int[] sailColor = new int[4], strokeColor; int fillColor;
 		myVectorf[] trans1Ara = new myVectorf[]{new myVectorf(0, 3.5f, -3),new myVectorf(0, 1.5f, 1),new myVectorf(0, 2.3f, 5),new myVectorf(0, 2.3f, 7)},
@@ -98,16 +98,15 @@ public class myBoatRndrObj {
 				buildOars(t, j, animCntr, 1, fillColor, sailColor, strokeColor, new myVectorf(0, 0.3f, 3));
 				buildOars(t, j, animCntr, -1, fillColor, sailColor, strokeColor, new myVectorf(0, 0.3f, 3));
 			}
-
 		}//for each flock
 	}//initBoatMasts	
 	public void drawMe(int[] sailColor, float animCntr, int mastColor, int type){
 		p.shape(boat[type]);
-		int idx = (int)((animCntr/myBoid.maxAnimCntr) * numAnimFrm);
+		int idx = (int)((animCntr/myBoid.maxAnimCntr) * numAnimFrm);			//determine which in the array of oars, corresponding to particular orientations, we should draw
 		p.shape(oars[type][idx]);
 	}
 
-
+	//build oars to orient in appropriate position for animIdx frame of animation - want all numAnimFrm of animation to cycle
 	public void buildOars(int type, int animIdx, float animCntr, float dirMult, int fillColor, int[] sailColor, int[] strokeColor, myVectorf transVec){
 		PShape sh = p.createShape(PConstants.GROUP);
 		float[] rotAra1 = new float[]{PConstants.HALF_PI, 1, 0, 0},

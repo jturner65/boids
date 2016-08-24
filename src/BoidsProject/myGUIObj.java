@@ -9,8 +9,7 @@ public class myGUIObj {
 	public myVector start, end;				//x,y coords of start corner, end corner (z==0) for clickable region
 	public String name, dispText;
 
-	public double val;
-	public final double minVal, maxVal;
+	private double val, minVal, maxVal;
 	public boolean treatAsInt;
 	public int _cVal;
 	public double modMult;						//multiplier for mod value
@@ -32,8 +31,11 @@ public class myGUIObj {
 	public myGUIObj(Project2 _p, String _name,float _xst, float _yst, float _xend, float _yend, double _min, double _max, double _initVal, boolean _tAsInt, double _modMult) {this(_p,_name,new myVector(_xst,_yst,0), new myVector(_xend,_yend,0), _min, _max, _initVal, _tAsInt, _modMult);	}
 	
 	public double getVal(){return val;}		
+	public void setNewMax(double _newval){	maxVal = _newval;val = ((val >= minVal)&&(val<=maxVal)) ? val : (val < minVal) ? minVal : maxVal;		}
+	public void setNewMin(double _newval){	minVal = _newval;val = ((val >= minVal)&&(val<=maxVal)) ? val : (val < minVal) ? minVal : maxVal;		}
+	
 	public double setVal(double _newVal){
-		val = ((_newVal > minVal)&&(_newVal<maxVal)) ? _newVal : (_newVal < minVal) ? minVal : maxVal;		
+		val = ((_newVal >= minVal)&&(_newVal<=maxVal)) ? _newVal : (_newVal < minVal) ? minVal : maxVal;		
 		return val;
 	}	
 	
