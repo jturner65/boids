@@ -86,7 +86,8 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		Double distSq, min2dist = min2DistPrey;
 		myPoint tarLoc, srcLoc;
 		for(int c = 0; c < flock.length; ++c){
-			tarLoc = new myPoint(flock[c].coords[0]); srcLoc = new myPoint(_src.coords[0]);
+			if(_src == null){return;}//_src boid might have been eaten
+			tarLoc = new myPoint(flock[c].coords[0]); srcLoc = new myPoint(_src.coords[0]);//resetting because may be changed in calcMinSqDist
 			distSq = calcMinDistSq(_src.coords[0], flock[c].coords[0], srcLoc, tarLoc, min2dist);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another - need to check both src and predflk
@@ -129,7 +130,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		myPoint tarLoc, srcLoc;
 		for(int c = 0; c < flock.length; ++c){
 			if((flock[c].ID == _src.ID) || (flock[c].neighbors.containsValue(_src))){continue;}
-			tarLoc = new myPoint(flock[c].coords[0]); srcLoc = new myPoint(_src.coords[0]);
+			tarLoc = new myPoint(flock[c].coords[0]); srcLoc = new myPoint(_src.coords[0]);//resetting because may be changed in calcMinSqDist
 			distSq = calcMinDistSq(_src.coords[0], flock[c].coords[0], srcLoc, tarLoc, min2Dist);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
