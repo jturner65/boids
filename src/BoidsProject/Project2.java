@@ -56,12 +56,23 @@ public class Project2 extends PApplet{
 	//private int[] numCreatures = new int []{35,35,35};	
 	private int[] numCreatures = new int []{500,500,500};	
 	public int curFlock = 0;
+	public static final int txtSz = 10;
 
 	//multi-threaded stuff
 
 	public ExecutorService th_exec;
 	
 	//////////////////////////////////////////////// code
+	public static void main(String[] passedArgs) {
+	    String[] appletArgs = new String[] { "BoidsProject.Project2" };
+	    if (passedArgs != null) {
+	    	PApplet.main(PApplet.concat(appletArgs, passedArgs));
+	    } else {
+	    	PApplet.main(appletArgs);
+	    }
+	}
+
+	
 	public void settings(){
 		size((int)(displayWidth*.95f), (int)(displayHeight*.9f),P3D);
 		noSmooth();
@@ -89,7 +100,7 @@ public class Project2 extends PApplet{
 		flags[flkAvoidPred]		= false;	
 		flags[flkHunt]			= false;
 		showInfo = true;
-		textSize(10);		
+		textSize(txtSz);		
 		//thread executor for multithreading
 		th_exec = Executors.newCachedThreadPool();
 		//th_exec = new ForkJoinPool();
@@ -436,7 +447,7 @@ public class Project2 extends PApplet{
 			debugMode, showVelocity, showFlkMbrs, drawBoids, saveAnim, singleStep, runSim, 
 			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt , clearPath, singleFlock //, useGLSL
 			);			
-	public double xOff = 20 , yOff = 20,			//offset values to render boolean menu on side of screen
+	public double xOff = 20 , yOff = 20 * (txtSz/12.0),			//offset values to render boolean menu on side of screen
 		  flval_xSt = 17, flval_ySt = 525, 	//start of flock data area
 		  fv_yOff, 							//dist between equivalent values in sequential flocks = wt_ySz * #lines in fv.getData()
 		  fv_ySz = 15,						//height of line in flock data
