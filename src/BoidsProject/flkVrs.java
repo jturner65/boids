@@ -87,7 +87,7 @@ public class flkVrs {
 		wts = new double[3][];//{defWtAra, defWtAra,	defWtAra};
 		for(int i=0;i<3;++i){double[] tmp = new double[defWtAra.length]; System.arraycopy( defWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}
 		maxFrcs = new double[][]{{100,200,100,10,400,20},{100,200,100,10,400,20},{100,200,100,10,400,20}};			//maybe scale forces
-		minVelMag = new double[]{maxVelMag[0]*.025f, maxVelMag[1]*.025f, maxVelMag[2]*.025f};
+		minVelMag = new double[]{maxVelMag[0]*.0025f, maxVelMag[1]*.0025f, maxVelMag[2]*.0025f};
 	}
 //	public void setBoatColor(int type, int[] sailColor){
 //		ThreadLocalRandom.current().nextInt(75);

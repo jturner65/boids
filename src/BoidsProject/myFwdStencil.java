@@ -53,7 +53,7 @@ public class myFwdStencil implements Callable<Boolean> {
 			subRes = (frcThresh-bd_k);
 			//1 frc at threshold, force <1 past threshold, but increases quickly when less than distthresh -- avoidance	
 			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
-			frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), subRes ));
+			frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID))._normalize(), subRes ));
 			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],others.get(bd_k).coords[0]), (subRes * subRes) + p.epsValCalc));
 		}
 		return frcVec;
@@ -66,7 +66,7 @@ public class myFwdStencil implements Callable<Boolean> {
 			//if((bd_k>velRadSq)||(null==b.neighbors.get(bd_k))){continue;}
 			if(bd_k>velRadSq){continue;}
 			dsq=(velRadSq-bd_k);
-			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0]), dsq));
+			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0])._normalize(), dsq));
 		}
 		return frcVec;
 	}
@@ -148,31 +148,15 @@ public class myFwdStencil implements Callable<Boolean> {
 		return myVector.ZEROVEC.cloneMe();
 	}
 	
-	//integrator
-	public myPoint integrate(myVector stateDot, myPoint state){		return myPoint._add(state, myVector._mult(stateDot, f.delT));}
-	public myVector integrate(myVector stateDot, myVector state){	return myVector._add(state, myVector._mult(stateDot, f.delT));}
-	
 	public void run(){
-		//for(int i =0; i<bAra.size();++i){
-		for(myBoid b : bAra){
-			b.forces[0].set(getForceAtLocation(b));
-		}
-//		for(myBoid b : bAra){
-//			b.velocity[0].set(integrate(myVector._mult(b.forces[0], (1.0/b.mass)), b.velocity[0]));			//myVector._add(velocity[0], myVector._mult(forces[1], p.delT/(1.0f * mass)));	divide by  mass, multiply by delta t
-//			if(b.velocity[0].magn > fv.maxVelMag[b.type]){b.velocity[0]._scale(fv.maxVelMag[b.type]);}
-//			if(b.velocity[0].magn < fv.minVelMag[b.type]){b.velocity[0]._scale(fv.minVelMag[b.type]);}
-//			b.coords[0].set(integrate(b.velocity[0], b.coords[0]));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
-//			setValWrapCoordsForDraw(b.coords[0]);
-//		}
+		for(myBoid b : bAra){b.forces[0].set(getForceAtLocation(b));}
 	}
 	
 	@Override
 	public Boolean call() throws Exception {
 		run(); return true;
 	}	
-	
-	public void setValWrapCoordsForDraw(myPoint _coords){_coords.set(((_coords.x+p.gridDimW) % p.gridDimW),((_coords.y+p.gridDimDp) % p.gridDimDp),((_coords.z+p.gridDimH) % p.gridDimH));	}//findValidWrapCoords	
-	
+
 	public String toString(){
 		String res = "";
 		return res;

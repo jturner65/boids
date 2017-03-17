@@ -109,13 +109,14 @@ public class myUpdateStencil implements Callable<Boolean> {
 		double chance;
 		for(myBoid dinner : b.preyFlk.values()){
 			chance = ThreadLocalRandom.current().nextDouble();
-			if((chance < killPct)&&(dinner.starveCntr>0)){b.eat(dinner.mass);dinner.starveCntr=0;return;}//kill him
+			if(chance < killPct){b.eat(dinner.mass);dinner.bd_flags[myBoid.isDead] = true;return;}//kill him next update by setting starveCntr = 0;
 		}
 	}//kill
 	
 	public void run(){	
 
 		for(myBoid b : bAra){
+			if(b.bd_flags[myBoid.isDead]){continue;}
 			b.velocity[0].set(integrate(myVector._mult(b.forces[0], (1.0/b.mass)), b.velocity[0]));			//myVector._add(velocity[0], myVector._mult(forces[1], p.delT/(1.0f * mass)));	divide by  mass, multiply by delta t
 			if(b.velocity[0].magn > f.fv.maxVelMag[b.type]){b.velocity[0]._scale(f.fv.maxVelMag[b.type]);}
 			if(b.velocity[0].magn < f.fv.minVelMag[b.type]){b.velocity[0]._scale(f.fv.minVelMag[b.type]);}
@@ -124,9 +125,9 @@ public class myUpdateStencil implements Callable<Boolean> {
 
 			reproduce(b);
 			setOrientation(b);
-			//b.O_axisAngle = toAxisAngle(b.orientation);
-			b.updateBoidCountersMT();	
-			if(b.starveCntr > 0){hunt(b);}
+
+			hunt(b);
+			b.updateBoidCountersMT();
 		}
 	}
 	

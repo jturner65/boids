@@ -200,15 +200,15 @@ public class myBoidFlock {
 		}							//apply update
 		try {callUpdFutures = p.th_exec.invokeAll(callUbdBoidCalcs);for(Future<Boolean> f: callUpdFutures) { f.get(); }} catch (Exception e) { e.printStackTrace(); }		
     	
-    	//update pred counters
-        myPoint[] bl = new myPoint[1];
-        myVector[] bVelFrc  = new myVector[2];
-        bl[0] = new myPoint(); bVelFrc[0]=new myVector(); bVelFrc[1]=new myVector();
+    	//update - remove dead, add babies
+        myPoint[] bl = new myPoint[]{new myPoint()};
+        myVector[] bVelFrc  = new myVector[]{new myVector(),new myVector()};
+        myBoid b;
         for(int c = 0; c < boidFlock.size(); ++c){
-          if((boidFlock.get(c)!= null) && (boidFlock.get(c).bd_flags[myBoid.hasStarved])){    removeBoid(c);  }
-          else {  
-        	  //bl[0] = new myPoint(); bVelFrc[0]=new myVector(); bVelFrc[1]=new myVector(); 
-        	  if(boidFlock.get(c).hadAChild(bl,bVelFrc)){myBoid tmpBby = this.addBoid(bl[0]); tmpBby.initNewborn(bVelFrc);}}
+        	b = boidFlock.get(c);
+        	if((b != null) && (b.bd_flags[myBoid.isDead])){    removeBoid(c);  }
+        	else {  
+        		if(b.hadAChild(bl,bVelFrc)){myBoid tmpBby = this.addBoid(bl[0]); tmpBby.initNewborn(bVelFrc);}}
         } 
 	}//updateBoids	
 	

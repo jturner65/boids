@@ -181,7 +181,7 @@ class myVector extends myPoint{
 	public static double _L2Norm(myVector v){return Math.sqrt(v._SqMag());}
 	public static double _L2SqNorm(myVector v){return v._SqMag();}
 	
-	public myVector _normalized(){double magn = this._mag(); myVector newVec = (magn == 0) ? (new myVector(0,0,0)) : (new myVector( this.x /= magn, this.y /= magn, this.z /= magn)); newVec._mag(); return newVec;}
+	//public myVector _normalized(){double magn = this._mag(); myVector newVec = (magn == 0) ? (new myVector(0,0,0)) : (new myVector( this.x /= magn, this.y /= magn, this.z /= magn)); newVec._mag(); return newVec;}
 
 	public myVector cloneMe(){myVector retVal = new myVector(this.x, this.y, this.z); return retVal;}  
 	

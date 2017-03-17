@@ -34,7 +34,7 @@ public class myBoid {
 	
 	public boolean[] bd_flags;	
 	public final static int canSpawn 		= 0,							//whether enough time has passed that this boid can spawn
-						 	hasStarved		= 1,							//whether this boid has starved to death
+						 	isDead			= 1,							//whether this boid is dead
 						 	isHungry		= 2,							//whether this boid is hungry
 						 	hadChild		= 3,							//had a child this cycle, needs to "deliver"
 						 	numbd_flags 	= 4;
@@ -145,7 +145,7 @@ public class myBoid {
 //		}
 	}//copySubSetBoidsMate
 	public void haveChild(myPoint _bl, myVector _bVel, myVector _bFrc){bd_flags[hadChild]=true; birthLoc=_bl;birthVel=_bVel;birthForce=_bFrc;}
-	public boolean hadAChild(myPoint[] _bl, myVector[] _bVelFrc){if(bd_flags[hadChild]){bd_flags[hadChild]=false;_bl[0]=birthLoc;_bVelFrc[0]=birthVel;_bVelFrc[1]=birthForce;return true;} else {return false;}}	
+	public boolean hadAChild(myPoint[] _bl, myVector[] _bVelFrc){if(bd_flags[hadChild]){bd_flags[hadChild]=false;_bl[0].set(birthLoc);_bVelFrc[0].set(birthVel);_bVelFrc[1].set(birthForce);return true;} else {return false;}}	
 	public int resetCntrs(int cntrBseVal, double mod){return (int)(cntrBseVal*(1+mod));}
 	
 	public void hasSpawned(){spawnCntr = resetCntrs(fv.spawnFreq[type],ThreadLocalRandom.current().nextDouble()); bd_flags[canSpawn] = false;}
@@ -160,7 +160,7 @@ public class myBoid {
 	//update all counters that determine state of boid
 	public void updateBoidCountersMT(){
 		starveCntr--;
-		bd_flags[hasStarved]=(starveCntr<=0);
+		bd_flags[isDead]= (starveCntr<=0);
 		spawnCntr--;
 		bd_flags[canSpawn]=(spawnCntr<=0);
 		bd_flags[isHungry] = (bd_flags[isHungry] || (p.random(fv.eatFreq[type])>=starveCntr)); //once he's hungry he stays hungry unless he eats (hungry set to false elsewhere)
@@ -169,7 +169,7 @@ public class myBoid {
 	//initialize newborn velocity, forces, and orientation
 	public void initNewborn(myVector[] bVelFrc){
 		this.velocity[0].set(bVelFrc[0]); this.velocity[1].set(bVelFrc[0]); 
-		this.forces[1].set(bVelFrc[1]);this.forces[0].set(bVelFrc[1]); 
+		this.forces[0].set(bVelFrc[1]);this.forces[1].set(bVelFrc[1]); 
 		setOrientation();
 	}
 	
@@ -236,6 +236,8 @@ public class myBoid {
 			p.translate(coords[0].x,coords[0].y,coords[0].z);		//move to location
 			if(p.flags[p.debugMode]){drawMyVec(rotVec, Project2.gui_Black,4.0f);p.drawAxes(100, 2.0f, new myPoint(0,0,0), orientation, 255);}
 			if(p.flags[p.showVelocity]){drawMyVec(velocity[0], Project2.gui_DarkMagenta,.5f);}
+			p.setColorValFill(p.gui_boatBody1 + type);
+			p.noStroke();
 			p.sphere(5);
 		p.popStyle();p.popMatrix();
 		animIncr();
