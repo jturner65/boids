@@ -1,7 +1,8 @@
 package BoidsProject;
 
-import java.util.TreeMap;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class myFwdStencil implements Callable<Boolean> {
@@ -9,7 +10,7 @@ public class myFwdStencil implements Callable<Boolean> {
 	//an overlay for calculations to be used to determine forces acting on a creature
 	public Project2 p;
 	public myBoid b;								//boid being worked on
-	public myBoid[] bAra;								//boid being worked on
+	public List<myBoid> bAra;								//boid being worked on
 	public myBoidFlock f, pry, prd;
 	public flkVrs fv;
 	public int type;
@@ -20,7 +21,7 @@ public class myFwdStencil implements Callable<Boolean> {
 			 		 linDist	= 3, 			//increases linearly as dist increases
 					 invLin 	= 4;	//decreases linearly as dist increases, up to some threshold
 
-	public myFwdStencil(Project2 _p, myBoidFlock _f, myBoidFlock _pry, myBoidFlock _prd, flkVrs _fv, myBoid[] _bAra) {
+	public myFwdStencil(Project2 _p, myBoidFlock _f, myBoidFlock _pry, myBoidFlock _prd, flkVrs _fv, List<myBoid> _bAra) {
 		p = _p;	f = _f; fv = _fv; pry=_pry; prd=_prd; bAra=_bAra;
 		velRadSq = fv.velRad[f.type] * fv.velRad[f.type]; 		
 		predRadSq = fv.predRad[f.type] * fv.predRad[f.type];
@@ -43,16 +44,16 @@ public class myFwdStencil implements Callable<Boolean> {
 	}
 
 	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
-	//private myVector frcAvoidCol(TreeMap<Double,myBoid> others, TreeMap<Integer,myPoint> otherLoc, double distThresh, double frcThresh){
-	private myVector frcAvoidCol(TreeMap<Double,myBoid> others, double distThresh, double frcThresh){
+	private myVector frcAvoidCol(ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double distThresh, double frcThresh){
+	//private myVector frcAvoidCol(ConcurrentSkipListMap<Double,myBoid> others, double distThresh, double frcThresh){
 		myVector frcVec = new myVector();
 		double subRes;
 		for(Double bd_k : others.keySet()){	
-			subRes = (frcThresh-bd_k);
 			//if((bd_k>distThresh)||(null==b.neighbors.get(bd_k))){continue;}
+			subRes = (frcThresh-bd_k);
 			//1 frc at threshold, force <1 past threshold, but increases quickly when less than distthresh -- avoidance	
-			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
-			frcVec._add(myVector._mult(myVector._sub(b.coords[0],others.get(bd_k).coords[0]), (subRes * subRes) + p.epsValCalc));
+			frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
+			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],others.get(bd_k).coords[0]), (subRes * subRes) + p.epsValCalc));
 		}
 		return frcVec;
 	}//frcAvoidCol
@@ -89,15 +90,19 @@ public class myFwdStencil implements Callable<Boolean> {
 		
 		//for pred/prey
 		if(!p.flags[p.singleFlock]){
+			//check if predators are near and 
 			if((b.predFlk.size() !=0) && (p.flags[p.flkAvoidPred])){
-				//avoidPred = frcAvoidCol(b.predFlk,b.predFlkLoc, neighRadSq, predRadSq);	
-				avoidPred = frcAvoidCol(b.predFlk, neighRadSq, predRadSq);	
+				//get avoid force if within neighborhood
+				//avoidPred = frcAvoidCol(b.predFlk, neighRadSq, predRadSq);	
+				avoidPred = frcAvoidCol(b.predFlk, b.predFlkLoc, neighRadSq, predRadSq);	
 				res._add(setFrcVal(avoidPred, fv.wts[type], fv.maxFrcs[type],fv.wFrcAvdPred));	//flee from predators
 				if(b.canSprint()){
-					//sprintFromPred = frcAvoidCol(b.predFlk,b.predFlkLoc, colRadSq, colRadSq); 
-					sprintFromPred = frcAvoidCol(b.predFlk, colRadSq, colRadSq); 
+					//add greater force if within collision radius
+					//sprintFromPred = frcAvoidCol(b.predFlk, colRadSq, colRadSq); 
+					sprintFromPred = frcAvoidCol(b.predFlk, b.predFlkLoc,  colRadSq, colRadSq); 
 					res._add(setFrcVal(sprintFromPred,fv.wts[type], fv.maxFrcs[type],fv.wFrcAvdPred));
-					b.starveCntr-=10;
+					//expensive to sprint, hunger increases
+					b.starveCntr-=2;
 				}//last gasp, only a brief period for sprint allowed, and can starve prey
 			}	
 			if((b.preyFlk.size() !=0) && (p.flags[p.flkHunt])){
@@ -110,8 +115,8 @@ public class myFwdStencil implements Callable<Boolean> {
 		}				
 
 		if(p.flags[p.flkAvoidCol]){
-			//avoidCol = frcAvoidCol(b.colliders, b.colliderLoc, colRadSq, colRadSq);	
-			avoidCol = frcAvoidCol(b.colliders, colRadSq, colRadSq);	
+			avoidCol = frcAvoidCol(b.colliders, b.colliderLoc, colRadSq, colRadSq);	
+			//avoidCol = frcAvoidCol(b.colliders, colRadSq, colRadSq);	
 			res._add(setFrcVal(avoidCol,fv.wts[type], fv.maxFrcs[type],fv.wFrcAvd));
 		}	//then find avoidance forces, if appropriate within f.colRad
 		if(p.flags[p.flkCenter]){
@@ -146,8 +151,8 @@ public class myFwdStencil implements Callable<Boolean> {
 	public myVector integrate(myVector stateDot, myVector state){	return myVector._add(state, myVector._mult(stateDot, f.delT));}
 	
 	public void run(){
-		for(int i =0; i<bAra.length;++i){
-			b = bAra[i];
+		for(int i =0; i<bAra.size();++i){
+			b = bAra.get(i);
 			if(b==null){continue;}
 			mass = b.mass;
 			type = b.type;

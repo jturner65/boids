@@ -1,5 +1,6 @@
 package BoidsProject;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -7,17 +8,18 @@ import java.util.concurrent.ThreadLocalRandom;
 public class myUpdateStencil implements Callable<Boolean> {
 	public Project2 p;
 	public myBoid b;
-	public myBoid[] bAra;
+	public List<myBoid> bAra;
 	public myBoidFlock f;
 	public final double rt2;
 	public final int O_FWD, O_RHT,  O_UP;
 	public final double epsValCalc, epsValCalcSq, spawnPct, killPct;
 	
-	myUpdateStencil(Project2 _p, myBoidFlock _f, myBoid[] _bAra){
+	myUpdateStencil(Project2 _p, myBoidFlock _f, List<myBoid> _bAra){
 		p=_p; f=_f; bAra=_bAra; 
-		O_FWD = _bAra[0].O_FWD;
-		O_RHT =  _bAra[0].O_RHT;  
-		O_UP =  _bAra[0].O_UP;  
+		myBoid tmp = bAra.get(0);
+		O_FWD = tmp.O_FWD;
+		O_RHT = tmp.O_RHT;  
+		O_UP = tmp.O_UP;  
 		rt2 = .5f*Math.sqrt(2); 
 		epsValCalc = p.epsValCalc;
 		epsValCalcSq = epsValCalc * epsValCalc;
@@ -114,8 +116,8 @@ public class myUpdateStencil implements Callable<Boolean> {
 	}//kill
 	
 	public void run(){	
-		for(int i=0;i<bAra.length;++i){
-			b=bAra[i];
+		for(int i=0;i<bAra.size();++i){
+			b=bAra.get(i);
 			if(b==null){continue;}
 			//move to use-now idx (0) - these are the values that are used by sim.
 			b.forces[0].set(b.forces[1]);

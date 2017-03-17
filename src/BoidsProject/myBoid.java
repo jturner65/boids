@@ -1,6 +1,7 @@
 package BoidsProject;
 
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.lang.Double;
 
@@ -36,7 +37,7 @@ public class myBoid {
 						 	hasStarved		= 1,							//whether this boid has starved to death
 						 	isHungry		= 2,							//whether this boid is hungry
 						 	hadChild		= 3,							//had a child this cycle, needs to "deliver"
-						 	numbd_flags = 4;
+						 	numbd_flags 	= 4;
 	
 	//location to put new child
 	public myPoint birthLoc;
@@ -50,15 +51,15 @@ public class myBoid {
 	public final double colRadSq, spawnRadSq;
 	public final int spawnFreq, eatFreq, O_FWD = 0, O_RHT = 1,  O_UP = 2;
 		
-	public TreeMap<Double, myBoid> neighbors,			//sorted map of neighbors to this boid
+	public ConcurrentSkipListMap<Double, myBoid> neighbors,			//sorted map of neighbors to this boid
 									colliders,			//sorted map of colliding neighbors to this boid - built when neighbors are built
 									predFlk,				//sorted map of predators near this boid
 									preyFlk,				//sorted map of prey near this boid
 									ptnWife;				//sorted map of potential mates near this boid
 	
-	public TreeMap<Integer, myPoint> neighLoc,			//boid mapped to location used for distance calc
-										//colliderLoc,		//boid mapped to location used for distance calc
-										//predFlkLoc,		//boid mapped to location used for distance calc
+	public ConcurrentSkipListMap<Integer, myPoint> neighLoc,			//boid mapped to location used for distance calc
+										colliderLoc,		//boid mapped to location used for distance calc
+										predFlkLoc,		//boid mapped to location used for distance calc
 										preyFlkLoc,		//boid mapped to location used for distance calc
 										ptnWifeLoc;				//sorted map of potential mates near this boid
 		
@@ -91,17 +92,17 @@ public class myBoid {
 		O_axisAngle=new double[]{0,1,0,0};
 		oldRotAngle = 0;
 		gender = ThreadLocalRandom.current().nextInt(1000)%2;												//0 or 1
-		neighbors 	= new TreeMap<Double, myBoid>();
-		colliders 	= new TreeMap<Double, myBoid>();
-		predFlk 	= new TreeMap<Double, myBoid>();
-		preyFlk 	= new TreeMap<Double, myBoid>();
-		ptnWife 	= new TreeMap<Double, myBoid>();
+		neighbors 	= new ConcurrentSkipListMap<Double, myBoid>();
+		colliders 	= new ConcurrentSkipListMap<Double, myBoid>();
+		predFlk 	= new ConcurrentSkipListMap<Double, myBoid>();
+		preyFlk 	= new ConcurrentSkipListMap<Double, myBoid>();
+		ptnWife 	= new ConcurrentSkipListMap<Double, myBoid>();
 		
-		neighLoc 	= new TreeMap<Integer, myPoint>();
-//		colliderLoc = new TreeMap<Integer, myPoint>();
-//		predFlkLoc	= new TreeMap<Integer, myPoint>();
-		preyFlkLoc	= new TreeMap<Integer, myPoint>();
-		ptnWifeLoc	= new TreeMap<Integer, myPoint>();
+		neighLoc 	= new ConcurrentSkipListMap<Integer, myPoint>();
+		colliderLoc = new ConcurrentSkipListMap<Integer, myPoint>();
+		predFlkLoc	= new ConcurrentSkipListMap<Integer, myPoint>();
+		preyFlkLoc	= new ConcurrentSkipListMap<Integer, myPoint>();
+		ptnWifeLoc	= new ConcurrentSkipListMap<Integer, myPoint>();
 		
 		spawnFreq = fv.spawnFreq[type];
 		eatFreq = fv.eatFreq[type];
@@ -122,13 +123,13 @@ public class myBoid {
 	
 	public void clearAllBoidMaps(){	
 		neighbors.clear(); colliders.clear(); predFlk.clear();	preyFlk.clear();ptnWife.clear();
-		neighLoc.clear(); //colliderLoc.clear();	predFlkLoc.clear();	
+		neighLoc.clear(); colliderLoc.clear();	//predFlkLoc.clear();	
 		preyFlkLoc.clear();ptnWifeLoc.clear();
 	}
 	
 	public void copySubSetBoidsCol(){
 		colliders.putAll(neighbors.subMap(0.0, colRadSq));
-	//	for(myBoid b : colliders.values()){colliderLoc.put(b.ID, neighLoc.get(b.ID));}		
+		for(myBoid b : colliders.values()){colliderLoc.put(b.ID, neighLoc.get(b.ID));}		
 	}
 	public void copySubSetBoidsMate(){
 		if((!bd_flags[canSpawn]) || (gender==0)){return;}//need "males" who can mate

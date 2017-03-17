@@ -112,20 +112,23 @@ public class flkVrs {
 	}//setBoatColor	
 	public double getInitMass(int type){return (massForType[type][0] + (massForType[type][1] - massForType[type][0])*Math.random());}
 	
-	//handles all modification of flock values from ui
+	//handles all modification of flock values from ui - wIdx is manufactured based on location in ui click area
 	public void modFlkVal(int fIdx, int wIdx, double mod){
 		//System.out.println("Attempt to modify flock : " + p.flkNames[fIdx] + " value : " + wIdx + " by " + mod);
 		if((fIdx==-1)||(wIdx==-1)){return;}
 		switch(wIdx){
+		//hierarchy - if neighbor then col and vel, if col then 
 			case 0  : {modVal(fIdx, nghbrRad, nghbrRadMax, .1f*nghbrRadMax, mod);fixNCVRads(fIdx, true, true);break;}			//flck radius
 			case 1  : {modVal(fIdx, colRad, .9f*nghbrRad[fIdx], .05f*nghbrRad[fIdx], mod);fixNCVRads(fIdx, false, true);break;}	//avoid radius
 			case 2  : {modVal(fIdx, velRad, .9f*nghbrRad[fIdx], colRad[fIdx], mod);break;}			//vel match radius
+			
 			case 3  : 						//3-9 are the 6 force weights
 			case 4  : 
 			case 5  : 
 			case 6  : 
 			case 7  : 
 			case 8  : {modFlkWt(fIdx,wIdx-3,mod*.01f);break;}						//3-9 are the 6 force weights
+			
 			case 9  : {modVal(fIdx, spawnPct, MaxSpAra[0], MinSpAra[0], mod*.001f); break;}
 			case 10 : {modVal(fIdx, spawnRad, MaxSpAra[1], MinSpAra[1], mod);break;}
 			case 11 : {modVal(fIdx, spawnFreq, MaxSpAra[2], MinSpAra[2], (int)(mod*10));break;}
@@ -139,12 +142,14 @@ public class flkVrs {
 	
 	//call after neighborhood, collision or avoidance radii have been modified
 	private void fixNCVRads(int fIdx, boolean modC, boolean modV){
-		if(modV){velRad[fIdx] = Math.min(Math.max(colRad[fIdx],velRad[fIdx]),.9f*nghbrRad[fIdx]);}//when col or neighbor rad modded
 		if(modC){colRad[fIdx] = Math.min(Math.max(colRad[fIdx],.05f*nghbrRad[fIdx]),.9f*nghbrRad[fIdx]);}//when neighbor rad modded	
+		if(modV){velRad[fIdx] = Math.min(Math.max(colRad[fIdx],velRad[fIdx]),.9f*nghbrRad[fIdx]);}//when col or neighbor rad modded
 	}
 	
-	private void modVal(int fIdx, int[] vals, double mx, double mn, int mod){	int oldVal = vals[fIdx];vals[fIdx] += mod;if(!(inRange(vals[fIdx], mx, mn))){vals[fIdx] = oldVal;}}	
-	private void modVal(int fIdx, double[] vals, double mx, double mn, double mod){double oldVal = vals[fIdx];vals[fIdx] += mod;	if(!(inRange(vals[fIdx], mx, mn))){vals[fIdx] = oldVal;}}
+	private void modVal(int fIdx, int[] vals, double max, double min, int mod){	int oldVal = vals[fIdx];vals[fIdx] += mod;if(!(inRange(vals[fIdx], max, min))){vals[fIdx] = oldVal;}}	
+	private void modVal(int fIdx, double[] vals, double max, double min, double mod){double oldVal = vals[fIdx];vals[fIdx] += mod;	if(!(inRange(vals[fIdx], max, min))){vals[fIdx] = oldVal;}}
+	
+	
 	//modify a particular flock force weight for a particular flock
 	private void modFlkWt(int fIdx, int wIdx, double mod){
 		double oldVal = this.wts[fIdx][wIdx];

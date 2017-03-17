@@ -189,7 +189,8 @@ public class Project2 extends PApplet{
 	  				pushMatrix();pushStyle();
 	  				translate(-gridDimW/2.0f,-gridDimDp/2.0f,-gridDimH/2.0f);
 	  		  		strokeWeight(.5f);
-	  				for(int i =0; i<numFlocks; ++i){for(int c = 0; c < flocks[i].boidFlock.length; ++c){flocks[i].boidFlock[c].drawMe();	}}
+	  				//for(int i =0; i<numFlocks; ++i){for(int c = 0; c < flocks[i].boidFlock.length; ++c){flocks[i].boidFlock[c].drawMe();	}}
+	  				for(int i =0; i<numFlocks; ++i){flocks[i].drawBoids();}
 	  				popStyle();popMatrix();
 	  			}
 			}// if drawcount mod cyclemoddraw = 0	  		
@@ -249,7 +250,7 @@ public class Project2 extends PApplet{
 			case '3' : {setFlags(flkAvoidCol,!flags[flkAvoidCol]);break;}		//- Toggle the collision avoidance forces on/off.    
 			case '4' : {setFlags(flkWander,!flags[flkWander]);break;}			//- Toggle the wandering force on/off.     
 			case '5' : {setFlags(flkAvoidPred,!flags[flkAvoidPred]);break;}		//- Toggle predator avoidance on/off.     
-			case '6' : {setFlags(flkHunt,!flags[flkHunt]);break;}		//- Toggle prey hunting.     
+			case '6' : {setFlags(flkHunt,!flags[flkHunt]);break;}				//- Toggle prey hunting.     
 			case '9' : {clearAllForces();break;}								//- clear all forces.  
 			case 'i' : 
 			case 'I' : {setFlags(singleFlock, !flags[singleFlock]);	break;} 											//reinit with either 1 or 3 flocks						
@@ -447,7 +448,7 @@ public class Project2 extends PApplet{
 			debugMode, showVelocity, showFlkMbrs, drawBoids, saveAnim, singleStep, runSim, 
 			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt , clearPath, singleFlock //, useGLSL
 			);			
-	public double xOff = 20 , yOff = 20 * (txtSz/12.0),			//offset values to render boolean menu on side of screen
+	public double xOff = 20 , yOff = 20,// * (txtSz/12.0),			//offset values to render boolean menu on side of screen
 		  flval_xSt = 17, flval_ySt = 525, 	//start of flock data area
 		  fv_yOff, 							//dist between equivalent values in sequential flocks = wt_ySz * #lines in fv.getData()
 		  fv_ySz = 15,						//height of line in flock data
