@@ -6,59 +6,60 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class myFwdStencil implements Callable<Boolean> {
-
 	//an overlay for calculations to be used to determine forces acting on a creature
-	public Project2 p;
-	public myBoid b;								//boid being worked on
-	public List<myBoid> bAra;								//boid being worked on
-	public myBoidFlock f, pry, prd;
-	public flkVrs fv;
-	public int type;
-	public double mass, velRadSq, predRadSq, neighRadSq, colRadSq;				
-	public final int invSq 		= 0,			//1/sq dist
+	private Project2 p;							//boid being worked on
+	private flkVrs fv;
+	private List<myBoid> bAra;								//boid being worked on
+	private myBoidFlock f;
+	myVector dampFrc;
+	private double velRadSq, predRadSq, neighRadSq, colRadSq;				
+	private final int invSq 		= 0,			//1/sq dist
 	 		 		 sqDist 	= 1,
 			 		 sqNegDist 	= 2,			//increases by sq as dist from increases
 			 		 linDist	= 3, 			//increases linearly as dist increases
 					 invLin 	= 4;	//decreases linearly as dist increases, up to some threshold
 
-	public myFwdStencil(Project2 _p, myBoidFlock _f, myBoidFlock _pry, myBoidFlock _prd, flkVrs _fv, List<myBoid> _bAra) {
-		p = _p;	f = _f; fv = _fv; pry=_pry; prd=_prd; bAra=_bAra;
+	public myFwdStencil(Project2 _p, myBoidFlock _f, List<myBoid> _bAra) {
+		p = _p;	f = _f;fv = f.fv; bAra=_bAra;
+		//pry = f.preyFlock; prd = f.predFlock;
 		velRadSq = fv.velRad[f.type] * fv.velRad[f.type]; 		
 		predRadSq = fv.predRad[f.type] * fv.predRad[f.type];
 		neighRadSq = fv.nghbrRad[f.type]* fv.nghbrRad[f.type];
 		colRadSq = fv.colRad[f.type] * fv.colRad[f.type];
+		dampFrc = new myVector();
 	}	
 	
 	//collect to center of local group
-	private myVector frcToCenter(){
-		double wtSum = 0, wtDist;		
+	private myVector frcToCenter(myBoid b){
+		double wtSum = 0;//, wtDist;		
 		myVector frcVec = new myVector();		
 		for(Double bd_k : b.neighbors.keySet()){	
 			//if(null==b.neighbors.get(bd_k)){continue;}
-			wtDist = bd_k;//(bd_k*bd_k);
-			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords[0]), wtDist));
-			wtSum += wtDist;	
+			//wtDist = bd_k;//(bd_k*bd_k);
+			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords[0]), bd_k));
+			wtSum += bd_k;	
 		}
 		frcVec._mult(wtSum == 0 ? 1 : 1.0f/wtSum);	
 		return frcVec;
 	}
 
 	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
-	private myVector frcAvoidCol(ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double distThresh, double frcThresh){
+	private myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double distThresh, double frcThresh){
 	//private myVector frcAvoidCol(ConcurrentSkipListMap<Double,myBoid> others, double distThresh, double frcThresh){
 		myVector frcVec = new myVector();
 		double subRes;
-		for(Double bd_k : others.keySet()){	
+		for(Double bd_k : others.keySet()){	//already limited to those closer than colRadSq
 			//if((bd_k>distThresh)||(null==b.neighbors.get(bd_k))){continue;}
 			subRes = (frcThresh-bd_k);
 			//1 frc at threshold, force <1 past threshold, but increases quickly when less than distthresh -- avoidance	
-			frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
+			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
+			frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), subRes ));
 			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],others.get(bd_k).coords[0]), (subRes * subRes) + p.epsValCalc));
 		}
 		return frcVec;
 	}//frcAvoidCol
 	
-	private myVector frcVelMatch(){
+	private myVector frcVelMatch(myBoid b){
 		double dsq;
 		myVector frcVec = new myVector();		
 		for(Double bd_k : b.neighbors.keySet()){	
@@ -69,22 +70,24 @@ public class myFwdStencil implements Callable<Boolean> {
 		}
 		return frcVec;
 	}
-	private myVector frcWander(){		return new myVector(ThreadLocalRandom.current().nextDouble(-mass,mass),ThreadLocalRandom.current().nextDouble(-mass,mass),ThreadLocalRandom.current().nextDouble(-mass,mass));}			//boid independent
+	private myVector frcWander(myBoid b){		return new myVector(ThreadLocalRandom.current().nextDouble(-b.mass,b.mass),ThreadLocalRandom.current().nextDouble(-b.mass,b.mass),ThreadLocalRandom.current().nextDouble(-b.mass,b.mass));}			//boid independent
 
 	//pass arrays since 2d arrays are arrays of references in java
 	private myVector setFrcVal(myVector frc, double[] multV, double[] maxV, int idx){
 		frc._mult(multV[idx]);
-		if(frc.magn > maxV[idx]){	frc._normalize();	frc._mult(maxV[idx]);	}
+		if(frc.magn > maxV[idx]){	frc._mult(maxV[idx]/frc.magn);}
 		return frc;		
 	}
 	//return all forces acting upon a certain location - location of boid
-	public myVector getForceAtLocation(){
+	public myVector getForceAtLocation(myBoid b){
 		myVector res = new myVector(), ctrFrc , velMtch , avoidCol , wndrFrc, avoidPred, sprintFromPred, chasePrey; 
 		//add all appropriate forces here to res.
 		//if exgternal forces to add, add here
 		//res._add(getVelAtLocation(b.coords[0]);
 		//forceWeights = new TreeMap<Double, myVector>();
 		//first find user input forces
+		
+		//forces should be weighted in order of collision avoidance, velocity matching, grouping together - if col force == either of the others, than others should be decreased
 		
 		if((p.flags[p.mouseClicked] ) && (!p.flags[p.shiftKeyPressed])){res._add(p.mouseForceAtLoc(b.coords[0]));}		
 		
@@ -94,48 +97,47 @@ public class myFwdStencil implements Callable<Boolean> {
 			if((b.predFlk.size() !=0) && (p.flags[p.flkAvoidPred])){
 				//get avoid force if within neighborhood
 				//avoidPred = frcAvoidCol(b.predFlk, neighRadSq, predRadSq);	
-				avoidPred = frcAvoidCol(b.predFlk, b.predFlkLoc, neighRadSq, predRadSq);	
-				res._add(setFrcVal(avoidPred, fv.wts[type], fv.maxFrcs[type],fv.wFrcAvdPred));	//flee from predators
+				avoidPred = frcAvoidCol(b, b.predFlk, b.predFlkLoc, neighRadSq, predRadSq);	
+				res._add(setFrcVal(avoidPred, fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));	//flee from predators
 				if(b.canSprint()){
 					//add greater force if within collision radius
-					//sprintFromPred = frcAvoidCol(b.predFlk, colRadSq, colRadSq); 
-					sprintFromPred = frcAvoidCol(b.predFlk, b.predFlkLoc,  colRadSq, colRadSq); 
-					res._add(setFrcVal(sprintFromPred,fv.wts[type], fv.maxFrcs[type],fv.wFrcAvdPred));
+					sprintFromPred = frcAvoidCol(b, b.predFlk, b.predFlkLoc,  colRadSq, colRadSq); 
+					res._add(setFrcVal(sprintFromPred,fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));
 					//expensive to sprint, hunger increases
 					b.starveCntr-=2;
 				}//last gasp, only a brief period for sprint allowed, and can starve prey
 			}	
 			if((b.preyFlk.size() !=0) && (p.flags[p.flkHunt])){
 				myBoid tar = b.preyFlk.firstEntry().getValue(); 
-				//double dist = b.preyFlk.firstEntry().getKey();
+				myPoint tarLoc = b.preyFlkLoc.get(tar.ID);
 				//add force at single boid target
-				chasePrey = myVector._mult(myVector._sub(tar.coords[0], b.coords[0]),  (fv.eatFreq[type]/(fv.eatFreq[type]-b.starveCntr+2)) );			//increase weight depending on how close to starving
-				res._add(setFrcVal(chasePrey,fv.wts[type], fv.maxFrcs[type],fv.wFrcChsPrey));
+				chasePrey = myVector._mult(myVector._sub(tarLoc, b.coords[0]),  (fv.eatFreq[b.type]/(fv.eatFreq[b.type]-b.starveCntr+2)) );			//increase weight depending on how close to starving
+				res._add(setFrcVal(chasePrey,fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcChsPrey));
 			}//run after prey, with increasing frc the hungrier we get			
 		}				
 
 		if(p.flags[p.flkAvoidCol]){
-			avoidCol = frcAvoidCol(b.colliders, b.colliderLoc, colRadSq, colRadSq);	
+			avoidCol = frcAvoidCol(b, b.colliders, b.colliderLoc, colRadSq, colRadSq);	
 			//avoidCol = frcAvoidCol(b.colliders, colRadSq, colRadSq);	
-			res._add(setFrcVal(avoidCol,fv.wts[type], fv.maxFrcs[type],fv.wFrcAvd));
+			res._add(setFrcVal(avoidCol,fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvd));
 		}	//then find avoidance forces, if appropriate within f.colRad
-		if(p.flags[p.flkCenter]){
-			ctrFrc = frcToCenter();		
-			res._add(setFrcVal(ctrFrc,fv.wts[type], fv.maxFrcs[type],fv.wFrcCtr));
-		}	//then find attracting forces, if appropriate within f.nghbrRad		
 		
 		if(p.flags[p.flkVelMatch]){			
-			velMtch = frcVelMatch();		
-			res._add(setFrcVal(velMtch,fv.wts[type], fv.maxFrcs[type],fv.wFrcVel));
+			velMtch = frcVelMatch(b);		
+			res._add(setFrcVal(velMtch,fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcVel));
 		}		//then find velocity matching forces, if appropriate within f.colRad
+		if(p.flags[p.flkCenter]){
+			ctrFrc = frcToCenter(b);		
+			res._add(setFrcVal(ctrFrc,fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcCtr));
+		}	//then find attracting forces, if appropriate within f.nghbrRad		
 		
-		if(p.flags[p.flkWander]){
-			wndrFrc = frcWander();								
-			res._add(setFrcVal(wndrFrc,fv.wts[type], fv.maxFrcs[type],fv.wFrcWnd));
+		if(p.flags[p.flkWander]){//brownian motion
+			wndrFrc = frcWander(b);								
+			res._add(setFrcVal(wndrFrc,fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcWnd));
 		}		//then find wandering forces, if appropriate	
 		
-		myVector dampFrc = new myVector(b.velocity[0]);
-		dampFrc._mult(-fv.dampConst[type]);
+		dampFrc.set(b.velocity[0]);
+		dampFrc._mult(-fv.dampConst[b.type]);
 		res._add(dampFrc);
 		return res;
 	}
@@ -151,20 +153,17 @@ public class myFwdStencil implements Callable<Boolean> {
 	public myVector integrate(myVector stateDot, myVector state){	return myVector._add(state, myVector._mult(stateDot, f.delT));}
 	
 	public void run(){
-		for(int i =0; i<bAra.size();++i){
-			b = bAra.get(i);
-			if(b==null){continue;}
-			mass = b.mass;
-			type = b.type;
-
-			b.forces[1].set(getForceAtLocation());
-			
-			b.velocity[1].set(integrate(myVector._mult(b.forces[1], (1/(1.0f*mass))), b.velocity[0]));			//myVector._add(velocity[0], myVector._mult(forces[1], p.delT/(1.0f * mass)));	divide by  mass, multiply by delta t
-			if(b.velocity[1].magn > fv.maxVelMag[type]){b.velocity[1]._scale(fv.maxVelMag[type]);}
-			if(b.velocity[1].magn < fv.minVelMag[type]){b.velocity[1]._scale(fv.minVelMag[type]);}
-			b.coords[1].set(integrate(b.velocity[1], b.coords[0]));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
-			setValWrapCoordsForDraw(b.coords[1]);
+		//for(int i =0; i<bAra.size();++i){
+		for(myBoid b : bAra){
+			b.forces[0].set(getForceAtLocation(b));
 		}
+//		for(myBoid b : bAra){
+//			b.velocity[0].set(integrate(myVector._mult(b.forces[0], (1.0/b.mass)), b.velocity[0]));			//myVector._add(velocity[0], myVector._mult(forces[1], p.delT/(1.0f * mass)));	divide by  mass, multiply by delta t
+//			if(b.velocity[0].magn > fv.maxVelMag[b.type]){b.velocity[0]._scale(fv.maxVelMag[b.type]);}
+//			if(b.velocity[0].magn < fv.minVelMag[b.type]){b.velocity[0]._scale(fv.minVelMag[b.type]);}
+//			b.coords[0].set(integrate(b.velocity[0], b.coords[0]));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
+//			setValWrapCoordsForDraw(b.coords[0]);
+//		}
 	}
 	
 	@Override

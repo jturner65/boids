@@ -46,10 +46,9 @@ public class myBoid {
 	public static final double maxAnimCntr = 1000.0f, baseAnimSpd = 1.0f;
 	public final double preCalcAnimSpd;
 	//boat construction variables
-	public int[] sailColor;
+	//public int[] sailColor;
 	public final int type,gender,bodyColor;													//for spawning gender = 0 == female, 1 == male;
-	public final double colRadSq, spawnRadSq;
-	public final int spawnFreq, eatFreq, O_FWD = 0, O_RHT = 1,  O_UP = 2;
+	public final int O_FWD = 0, O_RHT = 1,  O_UP = 2;
 		
 	public ConcurrentSkipListMap<Double, myBoid> neighbors,			//sorted map of neighbors to this boid
 									colliders,			//sorted map of colliding neighbors to this boid - built when neighbors are built
@@ -80,8 +79,6 @@ public class myBoid {
 		//oldForce = new myVector(0,0,0);
 		forces = new myVector[2];
 		type=_type;
-		sailColor = new int[3];
-		fv.setBoatColor(type, sailColor);
 		for (int i = 0; i < 2 ; ++i){
 			coords[i] = new myPoint(_coords);											//coords of body in world space
 			velocity[i] = myVector.ZEROVEC.cloneMe();
@@ -104,10 +101,6 @@ public class myBoid {
 		preyFlkLoc	= new ConcurrentSkipListMap<Integer, myPoint>();
 		ptnWifeLoc	= new ConcurrentSkipListMap<Integer, myPoint>();
 		
-		spawnFreq = fv.spawnFreq[type];
-		eatFreq = fv.eatFreq[type];
-		colRadSq = fv.colRad[type]* fv.colRad[type];
-		spawnRadSq = fv.spawnRad[type]* fv.spawnRad[type];
 		bodyColor = fv.bodyColor[type];
 
 	}//constructor
@@ -127,30 +120,38 @@ public class myBoid {
 		preyFlkLoc.clear();ptnWifeLoc.clear();
 	}
 	
-	public void copySubSetBoidsCol(){
+	public void copySubSetBoidsCol(Double colRadSq){		
 		colliders.putAll(neighbors.subMap(0.0, colRadSq));
 		for(myBoid b : colliders.values()){colliderLoc.put(b.ID, neighLoc.get(b.ID));}		
 	}
-	public void copySubSetBoidsMate(){
+	public void copySubSetBoidsMate(Double spawnRadSq){
 		if((!bd_flags[canSpawn]) || (gender==0)){return;}//need "males" who can mate
-		TreeMap<Double, myBoid> ptnMate 	= new TreeMap<Double, myBoid>();
-		ptnMate.putAll(neighbors.subMap(0.0, spawnRadSq));
-		for(Double dist : ptnMate.keySet()){
-			myBoid b = ptnMate.get(dist);
+		for(Double dist : neighbors.keySet()){
+			if (dist > spawnRadSq){return;}//returns in increasing order - can return once we're past spawn Rad Threshold
+			myBoid b = neighbors.get(dist);
 			if((b.gender==0)&&(b.canSpawn())){				
 				ptnWife.put(dist, b);
 				ptnWifeLoc.put(b.ID, neighLoc.get(b.ID));
 			}
 		}
-	}
+//		TreeMap<Double, myBoid> ptnMate 	= new TreeMap<Double, myBoid>();
+//		ptnMate.putAll(neighbors.subMap(0.0, spawnRadSq));
+//		for(Double dist : ptnMate.keySet()){
+//			myBoid b = ptnMate.get(dist);
+//			if((b.gender==0)&&(b.canSpawn())){				
+//				ptnWife.put(dist, b);
+//				ptnWifeLoc.put(b.ID, neighLoc.get(b.ID));
+//			}
+//		}
+	}//copySubSetBoidsMate
 	public void haveChild(myPoint _bl, myVector _bVel, myVector _bFrc){bd_flags[hadChild]=true; birthLoc=_bl;birthVel=_bVel;birthForce=_bFrc;}
 	public boolean hadAChild(myPoint[] _bl, myVector[] _bVelFrc){if(bd_flags[hadChild]){bd_flags[hadChild]=false;_bl[0]=birthLoc;_bVelFrc[0]=birthVel;_bVelFrc[1]=birthForce;return true;} else {return false;}}	
 	public int resetCntrs(int cntrBseVal, double mod){return (int)(cntrBseVal*(1+mod));}
 	
-	public void hasSpawned(){spawnCntr = resetCntrs(spawnFreq,ThreadLocalRandom.current().nextDouble()); bd_flags[canSpawn] = false;}
+	public void hasSpawned(){spawnCntr = resetCntrs(fv.spawnFreq[type],ThreadLocalRandom.current().nextDouble()); bd_flags[canSpawn] = false;}
 	public boolean canSpawn(){return bd_flags[canSpawn];}
-	public void eat(double tarMass){	starveCntr = resetCntrs(eatFreq,tarMass);bd_flags[isHungry]=false;}
-	public boolean canSprint(){return (starveCntr > .25f*eatFreq);}
+	public void eat(double tarMass){	starveCntr = resetCntrs(fv.eatFreq[type],tarMass);bd_flags[isHungry]=false;}
+	public boolean canSprint(){return (starveCntr > .25f*fv.eatFreq[type]);}
 	public boolean isHungry(){return bd_flags[isHungry];}
 	//init bd_flags state machine
 	public void initbd_flags(){bd_flags = new boolean[numbd_flags];for(int i=0;i<numbd_flags;++i){bd_flags[i]=false;}}
@@ -162,7 +163,7 @@ public class myBoid {
 		bd_flags[hasStarved]=(starveCntr<=0);
 		spawnCntr--;
 		bd_flags[canSpawn]=(spawnCntr<=0);
-		bd_flags[isHungry] = (bd_flags[isHungry] || (p.random(eatFreq)>=starveCntr)); //once he's hungry he stays hungry unless he eats
+		bd_flags[isHungry] = (bd_flags[isHungry] || (p.random(fv.eatFreq[type])>=starveCntr)); //once he's hungry he stays hungry unless he eats (hungry set to false elsewhere)
 	}//updateBoidCounters	
 	
 	//initialize newborn velocity, forces, and orientation
@@ -186,7 +187,7 @@ public class myBoid {
 		O_axisAngle = toAxisAngle();
 	}
 	
-	public myVector getFwdVec(){				
+	private myVector getFwdVec(){				
 		if( velocity[0].magn==0){			return orientation[O_FWD]._normalize();		}
 		else {		
 			myVector tmp = velocity[0].cloneMe();	
@@ -194,7 +195,7 @@ public class myBoid {
 		}
 	}
 	
-	public myVector getUpVec(){		
+	private myVector getUpVec(){		
 		if (Math.abs(orientation[O_FWD]._dot(myVector.UP) -1)< p.epsValCalc){
 			return myVector._cross(orientation[O_RHT], orientation[O_FWD]);
 		}
@@ -222,13 +223,25 @@ public class myBoid {
 			p.rotate(PConstants.PI/2.0f,0,1,0);
 			p.scale(scaleBt.x,scaleBt.y,scaleBt.z);																	//make appropriate size				
 			p.pushStyle();
-			f.tmpl.drawMe(sailColor,(float)animCntr,bodyColor, type);
-
-			p.popStyle();
-			
+			f.tmpl.drawMe(animCntr,bodyColor, type);
+			p.popStyle();			
 		p.popStyle();p.popMatrix();
 		animIncr();
-	}//drawmetor	
+	}//drawme 
+	
+	//draw this body on mesh
+	public void drawMeDebug(){
+		p.pushMatrix();p.pushStyle();
+			p.strokeWeight(1.0f/(float)mass);
+			p.translate(coords[0].x,coords[0].y,coords[0].z);		//move to location
+			if(p.flags[p.debugMode]){drawMyVec(rotVec, Project2.gui_Black,4.0f);p.drawAxes(100, 2.0f, new myPoint(0,0,0), orientation, 255);}
+			if(p.flags[p.showVelocity]){drawMyVec(velocity[0], Project2.gui_DarkMagenta,.5f);}
+			p.sphere(5);
+		p.popStyle();p.popMatrix();
+		animIncr();
+	}//drawme 
+	
+	
 	//public double calcBobbing(){		return 2*(p.cos(.01f*animCntr));	}		//bobbing motion
 	
 	public void drawMyVec(myVector v, int clr, float sw){
@@ -246,7 +259,7 @@ public class myBoid {
 	private void animIncr(){
 		//use animCntr to control animation
 		//animCntr+=(baseAnimSpd + (velocity[0].magn*.1f))*preCalcAnimSpd;						//set animMod based on velocity -> 1 + mag of velocity		
-		animCntr = (animCntr + (baseAnimSpd + (velocity[0].magn*.1f))*preCalcAnimSpd) % maxAnimCntr;						//set animMod based on velocity -> 1 + mag of velocity		
+		animCntr = (animCntr + (baseAnimSpd + (velocity[0].magn *.1f)) * preCalcAnimSpd) % maxAnimCntr;						//set animMod based on velocity -> 1 + mag of velocity		
 //		if((animCntr>maxAnimCntr)||(animCntr<0)){
 //			animCntr =0;
 //		}

@@ -15,7 +15,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	public myBoidFlock f, pry, prd;
 	public flkVrs fv;
 	public int type, nearCount;
-	public double predRad, mass, totMaxRadSq,tot2MaxRad, minNghbDistSq, minPredDistSq, min2DistPrey,min2DistNghbr;
+	public double predRad, mass, totMaxRadSq,tot2MaxRad, minNghbDistSq, minPredDistSq, min2DistPrey,min2DistNghbr, colRadSq, spawnRadSq;
 	public boolean tor;							//is torroidal
 	public final int invSq 		= 0,			//1/sq dist
 	 		 		 sqDist 	= 1,
@@ -28,6 +28,8 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		tot2MaxRad = 2* f.totMaxRad;
 		totMaxRadSq = f.totMaxRad * f.totMaxRad;
 		tor = p.flags[p.useTorroid]; 
+		colRadSq = fv.colRad[type]* fv.colRad[type];
+		spawnRadSq = fv.spawnRad[type]* fv.spawnRad[type];
 		minNghbDistSq = fv.nghbrRad[type] * fv.nghbrRad[type];
 		minPredDistSq = fv.predRad[type] * fv.predRad[type];
 		min2DistNghbr = 2 * fv.predRad[type];
@@ -37,7 +39,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	public void findMyNeighbors(myBoid _src){
 		if(nearCount >= bAra.size() ){		srchForNeighbors(_src, bAra, totMaxRadSq);	}		//if we want to have more than the size of the flock, get the whole flock			
 		else{								srchForNeighbors(_src, bAra,minNghbDistSq);	}		
-		_src.copySubSetBoidsCol();			
+		_src.copySubSetBoidsCol(colRadSq);			
 	}//findMyNeighbors
 	
 	//look for all neighbors until found neighborhood, expanding distance
@@ -60,7 +62,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	public void findMyNeighborsTor(myBoid _src){
 		if(nearCount >= bAra.size() ){	srchForNeighborsTor(_src, bAra, tot2MaxRad, totMaxRadSq);	}		//if we want to have more than the size of the flock, get the whole flock			
 		else{					srchForNeighborsTor(_src, bAra, min2DistNghbr,minNghbDistSq);	}
-		_src.copySubSetBoidsCol();		
+		_src.copySubSetBoidsCol(colRadSq);		
 	}//findMyNeighbors
 	
 	
@@ -168,26 +170,28 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	}	
 	
 	public void run(){	
+		myBoid b;
 		if(tor){
 			for(int c = 0; c < bAra.size(); ++c){
 				findMyNeighborsTor(bAra.get(c));
 			}						//find neighbors to each boid	
 			if(p.flags[p.flkHunt] &&(f!=pry)){//will == if only 1 flock
 				for(int c = 0; c < bAra.size(); ++c){
-					//if(bAra[c].canSpawn()){	bAra[c].copySubSetBoidsMate();	}
-					if(bAra.get(c).isHungry()){srchForPreyTor(bAra.get(c), pry.boidFlock);}}						//find neighbors to each boid		
+					b = bAra.get(c);
+					if(b.isHungry()){srchForPreyTor(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		} else {
 			for(int c = 0; c < bAra.size(); ++c){findMyNeighbors(bAra.get(c));}						//find neighbors to each boid		
 			if(p.flags[p.flkHunt] &&(f!=pry)){//will == if only 1 flock
 				for(int c = 0; c < bAra.size(); ++c){
-					//if(bAra[c].canSpawn()){	bAra[c].copySubSetBoidsMate();}
-					if(bAra.get(c).isHungry()){srchForPrey(bAra.get(c), pry.boidFlock);}}						//find neighbors to each boid		
+					b = bAra.get(c);
+					if(b.isHungry()){srchForPrey(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		}
 		//TODO modify to only perform this check if spawning enabled
 		for(int c = 0; c < bAra.size(); ++c){
-			if(bAra.get(c).canSpawn()){	bAra.get(c).copySubSetBoidsMate();	}
+			b = bAra.get(c);
+			if(b.canSpawn()){	b.copySubSetBoidsMate(spawnRadSq);	}
 		}
 	}//run()
 	

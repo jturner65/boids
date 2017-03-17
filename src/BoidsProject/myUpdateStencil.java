@@ -6,16 +6,15 @@ import java.util.concurrent.ThreadLocalRandom;
 
 
 public class myUpdateStencil implements Callable<Boolean> {
-	public Project2 p;
-	public myBoid b;
-	public List<myBoid> bAra;
-	public myBoidFlock f;
-	public final double rt2;
-	public final int O_FWD, O_RHT,  O_UP;
-	public final double epsValCalc, epsValCalcSq, spawnPct, killPct;
+	private Project2 p;
+	private List<myBoid> bAra;
+	private myBoidFlock f;
+	private final double rt2;
+	private final int O_FWD, O_RHT,  O_UP;
+	private final double epsValCalc, epsValCalcSq, spawnPct, killPct;
 	
 	myUpdateStencil(Project2 _p, myBoidFlock _f, List<myBoid> _bAra){
-		p=_p; f=_f; bAra=_bAra; 
+		p=_p; f=_f; bAra=_bAra;
 		myBoid tmp = bAra.get(0);
 		O_FWD = tmp.O_FWD;
 		O_RHT = tmp.O_RHT;  
@@ -27,19 +26,19 @@ public class myUpdateStencil implements Callable<Boolean> {
 		killPct = f.fv.killPct[f.type];
 	}	
 
-	public void reproduce(){
+	public void reproduce(myBoid b){
 		double chance;
 		for(myBoid ptWife : b.ptnWife.values()){
 			chance = ThreadLocalRandom.current().nextDouble();
 			if(chance < spawnPct){
-				b.haveChild(new myPoint(ptWife.coords[1],.5f,b.coords[1]), new myVector(ptWife.velocity[1],.5f,b.velocity[1]), new myVector(ptWife.forces[1],.5f,b.forces[1]));
+				b.haveChild(new myPoint(ptWife.coords[0],.5f,b.coords[0]), new myVector(ptWife.velocity[0],.5f,b.velocity[0]), new myVector(ptWife.forces[0],.5f,b.forces[0]));
 				ptWife.hasSpawned();	
 				b.hasSpawned();	return;
 			}
 		}
 	}
 	
-	public double[] toAxisAngle() {
+	public double[] toAxisAngle(myBoid b) {
 		double angle,x=rt2,y=rt2,z=rt2,s;
 		if (((b.orientation[O_FWD].y-b.orientation[O_RHT].x)*(b.orientation[O_FWD].y-b.orientation[O_RHT].x) < epsValCalcSq)
 		  && ((b.orientation[O_UP].x-b.orientation[O_FWD].z)*(b.orientation[O_UP].x-b.orientation[O_FWD].z) < epsValCalcSq)
@@ -75,7 +74,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 	   return new double[]{angle,x,y,z};
 	}//toAxisAngle
 	
-	public myVector getFwdVec(){
+	public myVector getFwdVec(myBoid b){
 		if(b.velocity[0].magn==0){			return b.orientation[O_FWD]._normalize();		}
 		else {		
 			myVector tmp = b.velocity[0].cloneMe();			
@@ -83,7 +82,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 		}
 	}
 	
-	public myVector getUpVec(){	
+	public myVector getUpVec(myBoid b){	
 		double fwdUpDotm1 = b.orientation[O_FWD]._dot(myVector.UP) -1;
 		if (fwdUpDotm1 * fwdUpDotm1 < epsValCalcSq){
 			return myVector._cross(b.orientation[O_RHT], b.orientation[O_FWD]);
@@ -91,10 +90,10 @@ public class myUpdateStencil implements Callable<Boolean> {
 		return myVector.UP.cloneMe();
 	}	
 	
-	public void setOrientation(){
+	public void setOrientation(myBoid b){
 		//find new orientation at new coords - creature is oriented in local axes as forward being positive z and up being positive y vectors correspond to columns, x/y/z elements correspond to rows
-		b.orientation[O_FWD].set(getFwdVec());
-		b.orientation[O_UP].set(getUpVec());	
+		b.orientation[O_FWD].set(getFwdVec(b));
+		b.orientation[O_UP].set(getUpVec(b));	
 		b.orientation[O_RHT] = b.orientation[O_UP]._cross(b.orientation[O_FWD]); //sideways is cross of up and forward - backwards(righthanded)
 		b.orientation[O_RHT].set(b.orientation[O_RHT]._normalize());
 		//need to recalc up?  may not be perp to normal
@@ -102,13 +101,12 @@ public class myUpdateStencil implements Callable<Boolean> {
 			b.orientation[O_UP] = b.orientation[O_FWD]._cross(b.orientation[O_RHT]); //sideways is cross of up and forward
 			b.orientation[O_UP].set(b.orientation[O_UP]._normalize());
 		}
-		b.O_axisAngle = toAxisAngle();
+		b.O_axisAngle = toAxisAngle(b);
 	}
 
 	//check kill chance, remove boid if succeeds
-	public void hunt(){
+	public void hunt(myBoid b){
 		double chance;
-		if(b.starveCntr<=0){return;}
 		for(myBoid dinner : b.preyFlk.values()){
 			chance = ThreadLocalRandom.current().nextDouble();
 			if((chance < killPct)&&(dinner.starveCntr>0)){b.eat(dinner.mass);dinner.starveCntr=0;return;}//kill him
@@ -116,20 +114,27 @@ public class myUpdateStencil implements Callable<Boolean> {
 	}//kill
 	
 	public void run(){	
-		for(int i=0;i<bAra.size();++i){
-			b=bAra.get(i);
-			if(b==null){continue;}
-			//move to use-now idx (0) - these are the values that are used by sim.
-			b.forces[0].set(b.forces[1]);
-			b.velocity[0].set(b.velocity[1]);
-			b.coords[0].set(b.coords[1]);		
-			reproduce();
-			setOrientation();
+
+		for(myBoid b : bAra){
+			b.velocity[0].set(integrate(myVector._mult(b.forces[0], (1.0/b.mass)), b.velocity[0]));			//myVector._add(velocity[0], myVector._mult(forces[1], p.delT/(1.0f * mass)));	divide by  mass, multiply by delta t
+			if(b.velocity[0].magn > f.fv.maxVelMag[b.type]){b.velocity[0]._scale(f.fv.maxVelMag[b.type]);}
+			if(b.velocity[0].magn < f.fv.minVelMag[b.type]){b.velocity[0]._scale(f.fv.minVelMag[b.type]);}
+			b.coords[0].set(integrate(b.velocity[0], b.coords[0]));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
+			setValWrapCoordsForDraw(b.coords[0]);
+
+			reproduce(b);
+			setOrientation(b);
 			//b.O_axisAngle = toAxisAngle(b.orientation);
 			b.updateBoidCountersMT();	
-			hunt();
+			if(b.starveCntr > 0){hunt(b);}
 		}
 	}
+	
+	//integrator
+	public myPoint integrate(myVector stateDot, myPoint state){		return myPoint._add(state, myVector._mult(stateDot, f.delT));}
+	public myVector integrate(myVector stateDot, myVector state){	return myVector._add(state, myVector._mult(stateDot, f.delT));}
+	
+	public void setValWrapCoordsForDraw(myPoint _coords){_coords.set(((_coords.x+p.gridDimW) % p.gridDimW),((_coords.y+p.gridDimDp) % p.gridDimDp),((_coords.z+p.gridDimH) % p.gridDimH));	}//findValidWrapCoords	
 
 	@Override
 	public Boolean call() throws Exception {

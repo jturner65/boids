@@ -185,14 +185,14 @@ public class Project2 extends PApplet{
 		  			buildCanvas();															//build drawing canvas based upon eye-to-scene vector
 		  		}
 	  			drawBoxBnds();
-	  			if(flags[drawBoids]){
-	  				pushMatrix();pushStyle();
-	  				translate(-gridDimW/2.0f,-gridDimDp/2.0f,-gridDimH/2.0f);
-	  		  		strokeWeight(.5f);
-	  				//for(int i =0; i<numFlocks; ++i){for(int c = 0; c < flocks[i].boidFlock.length; ++c){flocks[i].boidFlock[c].drawMe();	}}
-	  				for(int i =0; i<numFlocks; ++i){flocks[i].drawBoids();}
-	  				popStyle();popMatrix();
-	  			}
+	  			//if(flags[drawBoids]){
+  				pushMatrix();pushStyle();
+  				translate(-gridDimW/2.0f,-gridDimDp/2.0f,-gridDimH/2.0f);
+  		  		strokeWeight(.5f);
+  				//for(int i =0; i<numFlocks; ++i){for(int c = 0; c < flocks[i].boidFlock.length; ++c){flocks[i].boidFlock[c].drawMe();	}}
+  				for(int i =0; i<numFlocks; ++i){flocks[i].drawBoids();}
+  				popStyle();popMatrix();
+	  			//} 
 			}// if drawcount mod cyclemoddraw = 0	  		
 	   popMatrix(); 
 	}//draw3D
@@ -422,7 +422,7 @@ public class Project2 extends PApplet{
 			"Debug Mode",		
 			"Show Velocity",
 			"Show DB FlkMbrs",
-			"Draw Boids",
+			"Draw Spheres",
 			"Save Anim", 		
 			"Shift-Key Pressed",
 			"Click interact with boids", 	

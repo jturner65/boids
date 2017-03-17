@@ -136,7 +136,11 @@ public class myBoidFlock {
 	//move creatures to random start positions
 	public void scatterBoids() {for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).coords[0] =  randBoidStLoc(1);}}//	randInit
 	public void drawBoids(){
-  		for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMe(); } 
+		if(p.flags[p.drawBoids]){
+	  		for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMe();}			
+		} else {
+			for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMeDebug();  }
+		}
 	}
 //
 //	public int[] getFwdSimVals(){
@@ -177,7 +181,7 @@ public class myBoidFlock {
 			int finalLen = (c+mtFrameSize < boidFlock.size() ? mtFrameSize : boidFlock.size() - c);
 			//tmpList = new myBoid[finalLen];
 			//System.arraycopy(boidFlock, c, tmpList, 0, finalLen);			
-			callFwdBoidCalcs.add(new myFwdStencil(p, this, preyFlock, predFlock, fv, boidFlock.subList(c, c+finalLen)));
+			callFwdBoidCalcs.add(new myFwdStencil(p, this, boidFlock.subList(c, c+finalLen)));
 		}							//find next turn's motion for every creature by finding total force to act on creature
 		try {callFwdSimFutures = p.th_exec.invokeAll(callFwdBoidCalcs);for(Future<Boolean> f: callFwdSimFutures) { f.get(); }} catch (Exception e) { e.printStackTrace(); }		
 	}

@@ -100,7 +100,7 @@ public class myBoatRndrObj {
 			}
 		}//for each flock
 	}//initBoatMasts	
-	public void drawMe(int[] sailColor, float animCntr, int mastColor, int type){
+	public void drawMe(double animCntr, int mastColor, int type){
 		p.shape(boat[type]);
 		int idx = (int)((animCntr/myBoid.maxAnimCntr) * numAnimFrm);			//determine which in the array of oars, corresponding to particular orientations, we should draw
 		p.shape(oars[type][idx]);

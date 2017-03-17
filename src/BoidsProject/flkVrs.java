@@ -89,15 +89,15 @@ public class flkVrs {
 		maxFrcs = new double[][]{{100,200,100,10,400,20},{100,200,100,10,400,20},{100,200,100,10,400,20}};			//maybe scale forces
 		minVelMag = new double[]{maxVelMag[0]*.025f, maxVelMag[1]*.025f, maxVelMag[2]*.025f};
 	}
-	public void setBoatColor(int type, int[] sailColor){
-		ThreadLocalRandom.current().nextInt(75);
-		switch (type){
-		case Project2.galley :{sailColor[0] = 180 + ThreadLocalRandom.current().nextInt(75);sailColor[1] = 180 + ThreadLocalRandom.current().nextInt(75);	sailColor[2] = 180 + ThreadLocalRandom.current().nextInt(75);break;}
-		case Project2.pirate :{sailColor[0] = ThreadLocalRandom.current().nextInt(50); sailColor[1] = ThreadLocalRandom.current().nextInt(20);	sailColor[2] = ThreadLocalRandom.current().nextInt(20);break;}
-		case Project2.corsair :{sailColor[0] = 200 + ThreadLocalRandom.current().nextInt(50);sailColor[1] = 10 +ThreadLocalRandom.current().nextInt(20);	sailColor[2] = 20 + ThreadLocalRandom.current().nextInt(20);break;}
-		default :{sailColor[0] = 180 + ThreadLocalRandom.current().nextInt(75);sailColor[1] = 180 + ThreadLocalRandom.current().nextInt(75);	sailColor[2] = 180 + ThreadLocalRandom.current().nextInt(75);break;}
-		}
-	}//setBoatColor	
+//	public void setBoatColor(int type, int[] sailColor){
+//		ThreadLocalRandom.current().nextInt(75);
+//		switch (type){
+//		case Project2.galley :{sailColor[0] = 180 + ThreadLocalRandom.current().nextInt(75);sailColor[1] = 180 + ThreadLocalRandom.current().nextInt(75);	sailColor[2] = 180 + ThreadLocalRandom.current().nextInt(75);break;}
+//		case Project2.pirate :{sailColor[0] = ThreadLocalRandom.current().nextInt(50); sailColor[1] = ThreadLocalRandom.current().nextInt(20);	sailColor[2] = ThreadLocalRandom.current().nextInt(20);break;}
+//		case Project2.corsair :{sailColor[0] = 200 + ThreadLocalRandom.current().nextInt(50);sailColor[1] = 10 +ThreadLocalRandom.current().nextInt(20);	sailColor[2] = 20 + ThreadLocalRandom.current().nextInt(20);break;}
+//		default :{sailColor[0] = 180 + ThreadLocalRandom.current().nextInt(75);sailColor[1] = 180 + ThreadLocalRandom.current().nextInt(75);	sailColor[2] = 180 + ThreadLocalRandom.current().nextInt(75);break;}
+//		}
+//	}//setBoatColor	
 	public void setSailColor(int type, int[] sailColor){
 		switch (type){
 		case Project2.galley :{sailColor[0] = 200 + ThreadLocalRandom.current().nextInt(150);sailColor[1] = 200 + ThreadLocalRandom.current().nextInt(150);	sailColor[2] = 200 + ThreadLocalRandom.current().nextInt(150);sailColor[3] = 255;break;}
