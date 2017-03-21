@@ -134,7 +134,8 @@ public class myBoidFlock {
 //	}
 
 	//move creatures to random start positions
-	public void scatterBoids() {for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).coords[0] =  randBoidStLoc(1);}}//	randInit
+	//public void scatterBoids() {for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).coords[0] =  randBoidStLoc(1);}}//	randInit
+	public void scatterBoids() {for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).coords.set(randBoidStLoc(1));}}//	randInit
 	public void drawBoids(){
 		if(p.flags[p.drawBoids]){
 	  		for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMe();}			
@@ -211,7 +212,7 @@ public class myBoidFlock {
         		if(b.hadAChild(bl,bVelFrc)){myBoid tmpBby = this.addBoid(bl[0]); tmpBby.initNewborn(bVelFrc);}}
         } 
 	}//updateBoids	
-	
+
 	/////////////////////////// boid functions 
 
 	public String[] getInfoString(){return this.toString().split("\n",-1);}

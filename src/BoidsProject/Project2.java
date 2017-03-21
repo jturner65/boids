@@ -387,11 +387,12 @@ public class Project2 extends PApplet{
 	public final int flkWander 			= 15;			// on/off : flock wandering		
 	public final int flkAvoidPred		= 16;			//turn on/off avoiding predators force and chasing prey force
 	public final int flkHunt			= 17;
+	public final int flkSpawn			= 18;			//allow breeding
 	
-	public final int clearPath 			= 18;			// whether or not to allow creatures to wander off the path i.e. clear the window every display	
-	public final int singleFlock		= 19;			// whether to restart with 1 flock or 3
+	public final int clearPath 			= 19;			// whether or not to allow creatures to wander off the path i.e. clear the window every display	
+	public final int singleFlock		= 20;			// whether to restart with 1 flock or 3
 	// number of flags in the boolean flags array
-	public int numFlags 				= 20;
+	public int numFlags 				= 21;
 	
 	private boolean showInfo;							//only used to hide/show info at top of screen
 	
@@ -413,7 +414,8 @@ public class Project2 extends PApplet{
 			"Flock Avoid Col", 	
 			"Flock Wander",		
 			"Avoid Predators",		
-			"Chase Prey",		
+			"Chase Prey",	
+			"Breed",
 			"Clear Path",
 			"Single -> Multiple flocks"
 			};
@@ -436,7 +438,8 @@ public class Project2 extends PApplet{
 			"Flock Avoid Col", 	
 			"Flock Wander",		
 			"Avoid Predators",		
-			"Chase Prey",		
+			"Chase Prey",	
+			"No Breeding",
 			"Clear Path",
 			"Multiple -> Single flock"
 			};
@@ -446,10 +449,10 @@ public class Project2 extends PApplet{
 	//flags that can be modified by clicking on screen
 	public List<Integer> clkyFlgs = Arrays.asList(
 			debugMode, showVelocity, showFlkMbrs, drawBoids, saveAnim, singleStep, runSim, 
-			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt , clearPath, singleFlock //, useGLSL
+			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt, flkSpawn, clearPath, singleFlock //, useGLSL
 			);			
 	public double xOff = 20 , yOff = 20,// * (txtSz/12.0),			//offset values to render boolean menu on side of screen
-		  flval_xSt = 17, flval_ySt = 525, 	//start of flock data area
+		  flval_xSt = 17, flval_ySt = (numFlags*yOff) + 125, 	//start of flock data area
 		  fv_yOff, 							//dist between equivalent values in sequential flocks = wt_ySz * #lines in fv.getData()
 		  fv_ySz = 15,						//height of line in flock data
 		  fv_2Ysz = 30,						//dist from bottom of spawn to top of hunt
@@ -695,6 +698,8 @@ public class Project2 extends PApplet{
 	public void setFill(int[] clr, int alpha){fill(clr[0],clr[1],clr[2], alpha);}
 	public void setStroke(int[] clr, int alpha){stroke(clr[0],clr[1],clr[2], alpha);}
 	//draw side bar on left side of screen to enable interaction with booleans
+	
+	int clrList[] = new int[]{gui_DarkGreen, gui_DarkCyan, gui_DarkRed};
 	public void drawSideBar(){
 		pushMatrix();pushStyle();
 		hint(DISABLE_DEPTH_TEST);
@@ -709,7 +714,7 @@ public class Project2 extends PApplet{
 		for(int i =0; i<numFlags; ++i){
 			translate(xOff*.5f,yOff*.5f);
 			if(flags[i] ){													dispFlagTxt(flagNames[i],flagColors[i], true);			}
-			else {	if(flagNames[i].equals(altFlagNames[i])) {	dispFlagTxt(flagNames[i],new int[]{180,180,180}, false);}	
+			else {	if(flagNames[i].equals(altFlagNames[i])) {				dispFlagTxt(flagNames[i],new int[]{180,180,180}, false);}	
 					else {													dispFlagTxt(altFlagNames[i],new int[]{0,255-flagColors[i][1],255-flagColors[i][2]}, true);}		
 			}
 		}		
@@ -728,21 +733,24 @@ public class Project2 extends PApplet{
 		text("Curr Flock : " + flkNames[curFlock]+ " (use '[' & ']' to select)",0,-yOff*.25f);
 		translate(0,yOff*.75f);
 		text("Hunts : " + flkNames[flocks[curFlock].preyFlock.type]+ " Hunted by : "+ flkNames[flocks[curFlock].predFlock.type],0,-yOff*.25f);
-		int clrList[] = new int[]{gui_DarkGreen, gui_DarkCyan, gui_DarkRed};
 		translate(0,yOff);
 		for(int i =0; i<numFlocks; ++i){
-			String fvData[] = fv.getData(i);			
-			translate(0,-bdgSizeY-6);
-			drawMenuBadge(mnBdgBox,mnUVBox,i);
-			translate(bdgSizeX+3,bdgSizeY+6);
-			setColorValFill(clrList[i%3]);
-			text(fvData[0],0,-yOff*.5f);translate(0,yOff*.75f);
-			translate(-bdgSizeX-3,0);
-			for(int j=1;j<fvData.length; ++j){text(fvData[j],0,-yOff*.5f);translate(0,yOff*.75f);}			
+			drawFlockMenu(i);
 		}				
 		hint(ENABLE_DEPTH_TEST);
 		popStyle();	popMatrix();	
 	}//drawSideBar
+	
+	public void drawFlockMenu(int i){
+		String fvData[] = fv.getData(i);			
+		translate(0,-bdgSizeY-6);
+		drawMenuBadge(mnBdgBox,mnUVBox,i);
+		translate(bdgSizeX+3,bdgSizeY+6);
+		setColorValFill(clrList[i%3]);
+		text(fvData[0],0,-yOff*.5f);translate(0,yOff*.75f);
+		translate(-bdgSizeX-3,0);
+		for(int j=1;j<fvData.length; ++j){text(fvData[j],0,-yOff*.5f);translate(0,yOff*.75f);}	
+	}
 
 	public void drawMenuBadge(myPoint[] ara, myPoint[] uvAra, int type) {
 		beginShape(); 

@@ -10,7 +10,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 
 	//an overlay for calculations to be used to determine forces acting on a creature
 	public Project2 p;
-	public myBoid b;									//boid being worked on
+	//public myBoid b;									//boid being worked on
 	public List<myBoid> bAra;								//boid ara being worked on
 	public myBoidFlock f, pry, prd;
 	public flkVrs fv;
@@ -49,13 +49,13 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
 			if((chk.ID == _src.ID) || (chk.neighLoc.containsKey(_src.ID))){continue;}
-			distSq = myPoint._SqrDist(_src.coords[0], chk.coords[0]);
+			distSq = myPoint._SqrDist(_src.coords, chk.coords);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
 			distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
-			_src.neighLoc.put(chk.ID,chk.coords[0]);
+			_src.neighLoc.put(chk.ID,chk.coords);
 			//flock[c].neighbors.put(dist, _src);	
-			chk.neighLoc.put(_src.ID, _src.coords[0]);		
+			chk.neighLoc.put(_src.ID, _src.coords);		
 		}
 	}//srchForNeighbors	
 	//populate arrays with closest neighbors, sorted by distance, so that dist array and neighbor array coincde
@@ -73,8 +73,8 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
 			if((chk.ID == _src.ID) || (chk.neighLoc.containsKey(_src.ID))){continue;}
-			tarLoc = new myPoint(chk.coords[0]); srcLoc = new myPoint(_src.coords[0]);//resetting because may be changed in calcMinSqDist
-			distSq = calcMinDistSq(_src.coords[0], chk.coords[0], srcLoc, tarLoc, min2Dist);
+			tarLoc = new myPoint(chk.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
+			distSq = calcMinDistSq(_src.coords, chk.coords, srcLoc, tarLoc, min2Dist);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
 			distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
@@ -98,14 +98,14 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	private void srchForPrey(myBoid _src, List<myBoid> flock){
 		Double distSq;
 		for(myBoid chk : flock){
-			distSq = myPoint._SqrDist(_src.coords[0], chk.coords[0]);
+			distSq = myPoint._SqrDist(_src.coords, chk.coords);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another?
 			distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
 			//distSq = chkPutDistInMap(_src.preyFlk, distSq, flock[c]);
-			_src.preyFlkLoc.put(chk.ID,chk.coords[0]);
+			_src.preyFlkLoc.put(chk.ID,chk.coords);
 			//flock[c].predFlk.put(distSq, _src);			
-			chk.predFlkLoc.put(_src.ID, _src.coords[0]);		
+			chk.predFlkLoc.put(_src.ID, _src.coords);		
 		}	
 	}
 	private void srchForPreyTor(myBoid _src, List<myBoid> flock){
@@ -114,8 +114,8 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
 			if(_src == null){return;}//_src boid might have been eaten
-			tarLoc = new myPoint(chk.coords[0]); srcLoc = new myPoint(_src.coords[0]);//resetting because may be changed in calcMinSqDist
-			distSq = calcMinDistSq(_src.coords[0], chk.coords[0], srcLoc, tarLoc, min2dist);
+			tarLoc = new myPoint(chk.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
+			distSq = calcMinDistSq(_src.coords, chk.coords, srcLoc, tarLoc, min2dist);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another - need to check both src and predflk
 			distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
@@ -127,16 +127,18 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	}	
 	//need to check 2 flocks for pred - this will make sure any predators or prey at the same distance as other preds/prey will get moved a bit further away(instead of colliding)
 	private Double chkPutDistInMap(ConcurrentSkipListMap<Double, myBoid> smap,ConcurrentSkipListMap<Double, myBoid> dmap, Double distSq, myBoid _sboid, myBoid _dboid){
-		myBoid chks4d = smap.put(distSq, _dboid),
-				chkd4s = dmap.put(distSq, _sboid);
+		myBoid chks4d = smap.get(distSq),
+				chkd4s = dmap.get(distSq);
+		//int iter=0;
 		while((chks4d != null) || (chkd4s != null)){
 			//replace chk	if not null
-			if(chks4d != null){smap.put(distSq, chks4d);}		
-			if(chkd4s != null){dmap.put(distSq, chkd4s);}
-			distSq *= 1.0000000001;//mod distance some tiny amount
-			chks4d = smap.put(distSq, _dboid);	
-			chkd4s = dmap.put(distSq, _sboid);
+			distSq *= 1.0000001;//mod distance some tiny amount
+			chks4d = smap.get(distSq);
+			chkd4s = dmap.get(distSq);
+			//System.out.println("chkPutDistInMap collision : " + distSq + " iter : " + iter++ );
 		}
+		chks4d = smap.put(distSq, _dboid);	
+		chkd4s = dmap.put(distSq, _sboid);
 		return distSq;
 	}//chkDistInMap
 	
@@ -168,29 +170,27 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		newPt1.z = newP1[0];newPt2.z = newP2[0];
 		return dx+dy+dz;
 	}	
-	
+		
 	public void run(){	
-		myBoid b;
+		//myBoid b;
 		if(tor){
-			for(int c = 0; c < bAra.size(); ++c){
-				findMyNeighborsTor(bAra.get(c));
+			for(myBoid b : bAra){	
+				findMyNeighborsTor(b);
 			}						//find neighbors to each boid	
 			if(p.flags[p.flkHunt] &&(f!=pry)){//will == if only 1 flock
-				for(int c = 0; c < bAra.size(); ++c){
-					b = bAra.get(c);
+				for(myBoid b : bAra){	
+					//b = bAra.get(c);
 					if(b.isHungry()){srchForPreyTor(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		} else {
-			for(int c = 0; c < bAra.size(); ++c){findMyNeighbors(bAra.get(c));}						//find neighbors to each boid		
+			for(myBoid b : bAra){	findMyNeighbors(b);}						//find neighbors to each boid		
 			if(p.flags[p.flkHunt] &&(f!=pry)){//will == if only 1 flock
-				for(int c = 0; c < bAra.size(); ++c){
-					b = bAra.get(c);
+				for(myBoid b : bAra){	
 					if(b.isHungry()){srchForPrey(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		}
 		//TODO modify to only perform this check if spawning enabled
-		for(int c = 0; c < bAra.size(); ++c){
-			b = bAra.get(c);
+		for(myBoid b : bAra){	
 			if(b.canSpawn()){	b.copySubSetBoidsMate(spawnRadSq);	}
 		}
 	}//run()

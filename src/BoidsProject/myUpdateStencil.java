@@ -31,14 +31,14 @@ public class myUpdateStencil implements Callable<Boolean> {
 		for(myBoid ptWife : b.ptnWife.values()){
 			chance = ThreadLocalRandom.current().nextDouble();
 			if(chance < spawnPct){
-				b.haveChild(new myPoint(ptWife.coords[0],.5f,b.coords[0]), new myVector(ptWife.velocity[0],.5f,b.velocity[0]), new myVector(ptWife.forces[0],.5f,b.forces[0]));
+				b.haveChild(new myPoint(ptWife.coords,.5f,b.coords), new myVector(ptWife.velocity[0],.5f,b.velocity[0]), new myVector(ptWife.forces[0],.5f,b.forces[0]));
 				ptWife.hasSpawned();	
 				b.hasSpawned();	return;
 			}
 		}
 	}
 	
-	public double[] toAxisAngle(myBoid b) {
+	private double[] toAxisAngle(myBoid b) {
 		double angle,x=rt2,y=rt2,z=rt2,s;
 		if (((b.orientation[O_FWD].y-b.orientation[O_RHT].x)*(b.orientation[O_FWD].y-b.orientation[O_RHT].x) < epsValCalcSq)
 		  && ((b.orientation[O_UP].x-b.orientation[O_FWD].z)*(b.orientation[O_UP].x-b.orientation[O_FWD].z) < epsValCalcSq)
@@ -74,7 +74,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 	   return new double[]{angle,x,y,z};
 	}//toAxisAngle
 	
-	public myVector getFwdVec(myBoid b){
+	private myVector getFwdVec(myBoid b){
 		if(b.velocity[0].magn==0){			return b.orientation[O_FWD]._normalize();		}
 		else {		
 			myVector tmp = b.velocity[0].cloneMe();			
@@ -82,7 +82,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 		}
 	}
 	
-	public myVector getUpVec(myBoid b){	
+	private myVector getUpVec(myBoid b){	
 		double fwdUpDotm1 = b.orientation[O_FWD]._dot(myVector.UP) -1;
 		if (fwdUpDotm1 * fwdUpDotm1 < epsValCalcSq){
 			return myVector._cross(b.orientation[O_RHT], b.orientation[O_FWD]);
@@ -109,24 +109,46 @@ public class myUpdateStencil implements Callable<Boolean> {
 		double chance;
 		for(myBoid dinner : b.preyFlk.values()){
 			chance = ThreadLocalRandom.current().nextDouble();
-			if(chance < killPct){b.eat(dinner.mass);dinner.bd_flags[myBoid.isDead] = true;return;}//kill him next update by setting starveCntr = 0;
+			if(chance < killPct){b.eat(dinner.mass);dinner.killMe("Eaten by predator : "+b.ID);;return;}//kill him next update by setting starveCntr = 0;
 		}
 	}//kill
 	
 	public void run(){	
-
 		for(myBoid b : bAra){
-			if(b.bd_flags[myBoid.isDead]){continue;}
+			if(b.bd_flags[myBoid.isDead]){
+				//System.out.println("Dead boid in bAra in myUpdateStencil integrate : ID : " + b.ID);
+				continue;
+			}
 			b.velocity[0].set(integrate(myVector._mult(b.forces[0], (1.0/b.mass)), b.velocity[0]));			//myVector._add(velocity[0], myVector._mult(forces[1], p.delT/(1.0f * mass)));	divide by  mass, multiply by delta t
 			if(b.velocity[0].magn > f.fv.maxVelMag[b.type]){b.velocity[0]._scale(f.fv.maxVelMag[b.type]);}
 			if(b.velocity[0].magn < f.fv.minVelMag[b.type]){b.velocity[0]._scale(f.fv.minVelMag[b.type]);}
-			b.coords[0].set(integrate(b.velocity[0], b.coords[0]));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
-			setValWrapCoordsForDraw(b.coords[0]);
-
-			reproduce(b);
-			setOrientation(b);
-
-			hunt(b);
+			b.coords.set(integrate(b.velocity[0], b.coords));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
+			setValWrapCoordsForDraw(b.coords);
+			b.setOrientation();
+		}
+		if (p.flags[p.flkSpawn]) {
+			for(myBoid b : bAra){
+				if(b.bd_flags[myBoid.isDead]){
+					//System.out.println("Dead boid in bAra in myUpdateStencil reproduce : ID : " + b.ID);
+					continue;
+				}
+				reproduce(b);
+			}
+		}
+		if (p.flags[p.flkHunt]) {//see if near enough to prey to eat it
+			for(myBoid b : bAra){			
+				if(b.bd_flags[myBoid.isDead]){
+					//System.out.println("Dead boid in bAra in myUpdateStencil hunt : ID : " + b.ID);
+					continue;
+				}
+				hunt(b);
+			}
+		}
+		for(myBoid b : bAra){
+			if(b.bd_flags[myBoid.isDead]){
+				//System.out.println("Dead boid in bAra in myUpdateStencil update : ID : " + b.ID);
+				continue;
+			}			
 			b.updateBoidCountersMT();
 		}
 	}
