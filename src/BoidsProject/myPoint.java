@@ -33,6 +33,7 @@ public class myPoint {
 	
 	public void _sub(double _x, double _y, double _z){ this.x -= _x; this.y -= _y; this.z -= _z;  }                                                                   //_sub 3 args
 	public void _sub(myPoint v){ this.x -= v.x; this.y -= v.y; this.z -= v.z;  }                                                                           //_sub 1 arg 
+	public static myPoint _sub(myPoint p, myPoint q){ myPoint result = new myPoint(p.x - q.x, p.y - q.y, p.z - q.z); return result; }       //2 pt src 	
 	public static void _sub(myPoint p, myPoint q, myPoint r){ myPoint result = new myPoint(p.x - q.x, p.y - q.y, p.z - q.z); r.set(result);}       //2 pt src, 1 pt dest  	
 
 	public myPoint cloneMe(){myPoint retVal = new myPoint(this.x, this.y, this.z); return retVal;}  
@@ -41,7 +42,7 @@ public class myPoint {
 	public static double _L1Dist(myPoint q, myPoint r){ return Math.abs((r.x - q.x) + (r.y - q.y) + (r.z - q.z));}
 	
 	public double _SqrDist(myPoint q){ return (((this.x - q.x)*(this.x - q.x)) + ((this.y - q.y)*(this.y - q.y)) + ((this.z - q.z)*(this.z - q.z))); }
-	public static double _SqrDist(myPoint q, myPoint r){  return (((r.x - q.x) *(r.x - q.x)) + ((r.y - q.y) *(r.y - q.y)) + ((r.z - q.z) *(r.z - q.z)));}
+	public static double _SqrDist(myPoint q, myPoint r){double dx = (r.x - q.x), dy = (r.y - q.y), dz = (r.z - q.z);return ((dx*dx) + (dy*dy) + (dz*dz));}
 	
 	public double _dist(myPoint q){ return Math.sqrt( ((this.x - q.x)*(this.x - q.x)) + ((this.y - q.y)*(this.y - q.y)) + ((this.z - q.z)*(this.z - q.z)) ); }
 	public static double _dist(myPoint q, myPoint r){  return Math.sqrt(((r.x - q.x) *(r.x - q.x)) + ((r.y - q.y) *(r.y - q.y)) + ((r.z - q.z) *(r.z - q.z)));}

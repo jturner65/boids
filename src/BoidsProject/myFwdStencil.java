@@ -29,7 +29,8 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 		dampFrc = new myVector();
 	}	
 	protected abstract myVector frcToCenter(myBoid b); 
-	protected abstract myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double frcThresh);
+	//protected abstract myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double frcThresh);
+	protected abstract myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myPoint> otherLoc, double frcThresh);
 	protected abstract myVector frcVelMatch(myBoid b);
 //	//collect to center of local group
 //	private myVector frcToCenter(myBoid b){
@@ -100,25 +101,38 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 			for(myBoid b : bAra){b.forces[0]._add(p.mouseForceAtLoc(b.coords));}
 		}
 		if(!p.flags[p.singleFlock]){
-			if (p.flags[p.flkAvoidPred]){//avoid predators
-				for(myBoid b : bAra){
-					if (b.predFlk.size() !=0){//avoid predators if they are nearby
-						b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.predFlk, b.predFlkLoc, predRadSq), fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));	//flee from predators
-						if(b.canSprint()){ 
-							//add greater force if within collision radius
-							b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.predFlk, b.predFlkLoc,  colRadSq),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));
-							//expensive to sprint, hunger increases
-							b.starveCntr-=2;
-						}//last gasp, only a brief period for sprint allowed, and can starve prey
-					}					
-				}
-			}			
 			if (p.flags[p.flkHunt]) {//go to closest prey
+				if (p.flags[p.flkAvoidPred]){//avoid predators
+					for(myBoid b : bAra){
+						if (b.predFlkLoc.size() !=0){//avoid predators if they are nearby
+							//b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.predFlk, b.predFlkLoc, predRadSq), fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));	//flee from predators
+							b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.predFlkLoc, predRadSq), fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));	//flee from predators
+							if(b.canSprint()){ 
+								//add greater force if within collision radius
+								//b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.predFlk, b.predFlkLoc,  colRadSq),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));
+								b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.predFlkLoc,  colRadSq),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvdPred));
+								//expensive to sprint, hunger increases
+								--b.starveCntr;
+							}//last gasp, only a brief period for sprint allowed, and can starve prey
+						}					
+					}
+				}			
 				for(myBoid b : bAra){
-					if (b.preyFlk.size() !=0){//if prey exists
-						myBoid tar = b.preyFlk.firstEntry().getValue(); 
+//					if ((b.preyFlkLoc.size() !=0) || (b.predFlkLoc.size() !=0)){//if prey exists
+//						System.out.println("Flock : " + f.name+" ID : " + b.ID + " preyFlock size : " + b.preyFlkLoc.size()+ " pred flk size : " + b.predFlkLoc.size());
+//					}
+										
+					if (b.preyFlkLoc.size() !=0){//if prey exists
+						myPoint tar = b.preyFlkLoc.firstEntry().getValue(); 
 						//add force at single boid target
-						b.forces[0]._add(setFrcVal(myVector._mult(myVector._sub(b.preyFlkLoc.get(tar.ID), b.coords),  (fv.eatFreq[b.type]/(fv.eatFreq[b.type]-b.starveCntr+2)) ),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcChsPrey));						
+						double mult = (fv.eatFreq[b.type]/(b.starveCntr + 1.0));
+						myVector chase = setFrcVal(myVector._mult(myVector._sub(tar, b.coords),  mult),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcChsPrey); 
+//						if(b.ID % 100 == 0){
+//							System.out.println("Flock : " + f.name+" ID : " + b.ID + " Chase force : " + chase.toString() + " mult : " + mult + " starve : " + b.starveCntr);
+//							
+//						}
+						
+						b.forces[0]._add(chase);						
 					}
 				}
 			}		
@@ -126,8 +140,9 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 		
 		if(p.flags[p.flkAvoidCol]){//find avoidance forces, if appropriate within f.colRad
 			for(myBoid b : bAra){
-				if(b.colliders.size()==0){continue;}
-				b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.colliders, b.colliderLoc, colRadSq),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvd));
+				if(b.colliderLoc.size()==0){continue;}
+				//b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.colliders, b.colliderLoc, colRadSq),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvd));
+				b.forces[0]._add(setFrcVal(frcAvoidCol(b, b.colliderLoc, colRadSq),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcAvd));
 			}
 		}				
 		
@@ -174,9 +189,10 @@ class myOrigForceStencil extends myFwdStencil{
 	protected myVector frcToCenter(myBoid b){
 		double wtSqSum = 0, wtDist;	
 		myVector frcVec = new myVector();
-		for(Double bd_k : b.neighbors.keySet()){	
+		for(Double bd_k : b.neighLoc.keySet()){	
 			wtDist = 1.0/bd_k;//(bd_k*bd_k);
-			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
+			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(bd_k), b.coords), wtDist));
+			//frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
 			wtSqSum += wtDist;	
 		}
 		frcVec._div(wtSqSum);				
@@ -185,11 +201,11 @@ class myOrigForceStencil extends myFwdStencil{
 
 	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
 	@Override
-	protected myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double frcThresh){
+	protected myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myPoint> otherLoc, double frcThresh){
 		myVector frcVec = new myVector(), tmpVec;
 		double subRes, wtSqSum = 0;
-		for(Double bd_k : others.keySet()){	//already limited to those closer than colRadSq
-			tmpVec = myVector._sub(b.coords,otherLoc.get(others.get(bd_k).ID));
+		for(Double bd_k : otherLoc.keySet()){	//already limited to those closer than colRadSq
+			tmpVec = myVector._sub(b.coords,otherLoc.get(bd_k));
 			subRes = 1.0/(bd_k * tmpVec.magn);
 			wtSqSum += subRes;
 			frcVec._add(myVector._mult(tmpVec, subRes ));
@@ -210,7 +226,7 @@ class myOrigForceStencil extends myFwdStencil{
 		}
 		frcVec._div(wtSqSum == 0 ? 1 : wtSqSum);
 		return frcVec;
-	}
+	}//frcVelMatch
 	
 }//myOrigForceStencil
 
@@ -225,9 +241,9 @@ class myLinForceStencil extends myFwdStencil{
 	protected myVector frcToCenter(myBoid b){
 		double wtSqSum = 0, wtDist;	
 		myVector frcVec = new myVector();
-		for(Double bd_k : b.neighbors.keySet()){	
+		for(Double bd_k : b.neighLoc.keySet()){	
 			wtDist = bd_k;
-			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
+			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(bd_k), b.coords), wtDist));
 			wtSqSum += wtDist;	
 		}
 		frcVec._div(wtSqSum);				
@@ -236,11 +252,11 @@ class myLinForceStencil extends myFwdStencil{
 
 	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
 	@Override
-	protected myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double frcThresh){
+	protected myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myPoint> otherLoc, double frcThresh){
 		myVector frcVec = new myVector(), tmpVec;
 		double subRes;
-		for(Double bd_k : others.keySet()){	//already limited to those closer than colRadSq
-			tmpVec = myVector._sub(b.coords,otherLoc.get(others.get(bd_k).ID));
+		for(Double bd_k : otherLoc.keySet()){	//already limited to those closer than colRadSq
+			tmpVec = myVector._sub(b.coords,otherLoc.get(bd_k));
 			subRes = (frcThresh - bd_k); 	//old
 			frcVec._add(myVector._mult(tmpVec, subRes ));
 		}
@@ -254,10 +270,10 @@ class myLinForceStencil extends myFwdStencil{
 		for(Double bd_k : b.neighbors.keySet()){	
 			if(bd_k>velRadSq){continue;}
 			dsq=(velRadSq-bd_k);
-			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0])._normalize(), dsq));
+			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0]), dsq));
 		}
 		return frcVec;
 	}
 	
 	
-}//myOrigForceStencil
+}//myLinForceStencil

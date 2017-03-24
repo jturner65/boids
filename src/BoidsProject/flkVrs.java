@@ -14,7 +14,7 @@ public class flkVrs {
 	public myBoidFlock[] flocks;								//from p
 	//weight multiplier for forces - centering, avoidance, velocity matching and wander
 	
-	private double neighborMult = .35f;							//multiplier for neighborhood consideration against zone size - all rads built off this
+	private final double neighborMult = .5f;							//multiplier for neighborhood consideration against zone size - all rads built off this
 	
 	public double[] dampConst = new double[]{.01f, .01f, .01f};					//multiplier for damping force, to slow boats down if nothing else acting on them
 	
@@ -50,8 +50,8 @@ public class flkVrs {
 	public double[] maxVelMag = new double[]{180, 180, 180},		//max velocity for flock member
 				minVelMag;										//min velocity for flock member
 
-	public final double[] defWtAra = new double[]{.5f, .75f, .5f, 1.5f, .5f, .1f};						//default array of weights for different forces
-	public final double[] defOrigWtAra = new double[]{5.0f, 12.0f, 7.0f, .5f, 15.0f, 10.0f};			//default array of weights for different forces
+	public final double[] defWtAra = new double[]{.5f, .75f, .5f, .5f, .5f, .1f};						//default array of weights for different forces
+	public final double[] defOrigWtAra = new double[]{5.0f, 12.0f, 7.0f, 3.5f, .5f, .1f};			//default array of weights for different forces
 	public double[] MaxWtAra = new double[]{15, 15, 15, 15, 15, 15},								
 			MinWtAra = new double[]{.01f, .01f, .01f, .01f, .001f, .001f},			
 			MaxSpAra = new double[]{1,10000,100000},								
@@ -81,6 +81,7 @@ public class flkVrs {
 		eatFreq = new int[]{2000,2000,2000}; 			//# cycles w/out food until starve to death
 		killRad = new double[]{1,1,1};						//radius to kill * mass
 		killPct = new double[]{.01f, .01f, .01f};				//% chance to kill prey creature
+		//killPct = new double[]{.9f, .9f, .9f};				//% chance to kill prey creature
 		//predator range for a flock
 		predRad = new double[]{500,500,500};					//radius to avoid pred/find prey	
 		//wts = new double[][]{{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f}};

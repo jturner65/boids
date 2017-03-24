@@ -23,7 +23,7 @@ public class myBoidFlock {
 	public int nearCount;						//# of creatures required to have a neighborhood - some % of total # of creatures, or nearMinCnt, whichever is larger
 	public final int nearMinCnt = 5;			//smallest neighborhood size allowed -> 5 or total # of creatures, whichever is smaller
 	
-	public double delT;							//boid sim timestep - set at beginning of every update cycle
+	//public double delT;							//boid sim timestep - set at beginning of every update cycle
 	
 	public boolean[] bflk_flags;	
 	public final static int useLifespan 	= 0,		//uses lifespan value of cell
@@ -46,8 +46,8 @@ public class myBoidFlock {
 	
 	public myBoidFlock(Project2 _p, String _name, int _numBoids, int _type, flkVrs _fv){
 		p = _p;	name = _name;fv = _fv;
-		delT = .1f;
-		numBoids = _numBoids;
+		//delT = .1f;
+		setNumBoids(_numBoids);
 		initbflk_flags(true);
 		bflk_flags[useLifespan]=false;
 		totMaxRad = p.gridDimW + p.gridDimDp + p.gridDimH;
@@ -90,19 +90,22 @@ public class myBoidFlock {
 	public double calcRandLocation(double randNum1, double randNum2, double sqDim, double mathCalc, double mult){return ((sqDim/2.0f) + (randNum2 * (sqDim/3.0f) * mathCalc * mult));}
 	public myPoint randBoidStLoc(double mult){		return new myPoint(ThreadLocalRandom.current().nextDouble(p.gridDimW),ThreadLocalRandom.current().nextDouble(p.gridDimDp),ThreadLocalRandom.current().nextDouble(p.gridDimH));	}
 	
+	public void setNumBoids(int _numBoids){
+		numBoids = _numBoids;
+		nearCount = (int) Math.max(Math.min(nearMinCnt,numBoids), numBoids*nearPct); 		
+	}
+	
 	//adjust boid population by m
 	public void modBoidPop(int m){
 		if(m>0){if(boidFlock.size() >= p.maxBoats) {return;}for(int i=0;i<m;++i){ addBoid();}} 
 		else { int n=-1*m; n = (n>numBoids-1 ? numBoids-1 : n);for(int i=0;i<n;++i){removeBoid();}}
-		nearCount = (int) Math.max(Math.min(nearMinCnt,numBoids), numBoids*nearPct); 
 	}//modBoidPop
 	
-	public myBoid addBoid(){	return addBoid(randBoidStLoc(1));	}
-	
+	public myBoid addBoid(){	return addBoid(randBoidStLoc(1));	}	
 	public myBoid addBoid(myPoint stLoc){
 		myBoid tmp = new myBoid(p,this, stLoc, type, fv); 
 		boidFlock.add(tmp);
-		numBoids = boidFlock.size();
+		setNumBoids(boidFlock.size());
 		return tmp;
 	}//addBoid	
 	
@@ -110,7 +113,7 @@ public class myBoidFlock {
 	public void removeBoid(int idx){
 		if(idx<0){return;}	
 		boidFlock.remove(idx);
-		numBoids = boidFlock.size();
+		setNumBoids(boidFlock.size());
 	}//removeBoid	
 	
 	//move creatures to random start positions
@@ -119,7 +122,9 @@ public class myBoidFlock {
 		if(p.flags[p.drawBoids]){
 	  		for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMe();}			
 		} else {
-			for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMeDebug();  }
+			for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawMeBall();  }
+			for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawClosestPrey();  }
+			for(int c = 0; c < boidFlock.size(); ++c){boidFlock.get(c).drawClosestPredator();  }
 		}
 	}
 	
@@ -146,8 +151,7 @@ public class myBoidFlock {
 	}
 	
 	//build forces using linear distance functions
-	public void moveBoidsLinMultTH(double _delT){
-		delT = _delT; 
+	public void moveBoidsLinMultTH(){
 		callFwdBoidCalcs.clear();
 		for(int c = 0; c < boidFlock.size(); c+=mtFrameSize){
 			int finalLen = (c+mtFrameSize < boidFlock.size() ? mtFrameSize : boidFlock.size() - c);
@@ -157,8 +161,7 @@ public class myBoidFlock {
 	}
 	
 	//build forces using original boids-style distance functions
-	public void moveBoidsOrigMultTH(double _delT){
-		delT = _delT; 
+	public void moveBoidsOrigMultTH(){
 		callFwdBoidCalcs.clear();
 		for(int c = 0; c < boidFlock.size(); c+=mtFrameSize){
 			int finalLen = (c+mtFrameSize < boidFlock.size() ? mtFrameSize : boidFlock.size() - c);
@@ -166,8 +169,7 @@ public class myBoidFlock {
 		}							//find next turn's motion for every creature by finding total force to act on creature
 		try {callFwdSimFutures = p.th_exec.invokeAll(callFwdBoidCalcs);for(Future<Boolean> f: callFwdSimFutures) { f.get(); }} catch (Exception e) { e.printStackTrace(); }		
 	}
-	public void updateBoidMovement(double _delT){
-		delT = _delT; 
+	public void updateBoidMovement(){
 		callUbdBoidCalcs.clear();
 		for(int c = 0; c < boidFlock.size(); c+=mtFrameSize){
 			int finalLen = (c+mtFrameSize < boidFlock.size() ? mtFrameSize : boidFlock.size() - c);

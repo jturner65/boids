@@ -78,7 +78,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 		if(b.velocity[0].magn==0){			return b.orientation[O_FWD]._normalize();		}
 		else {		
 			myVector tmp = b.velocity[0].cloneMe();			
-			tmp._normalize();return new myVector(b.orientation[O_FWD], f.delT, tmp);		
+			tmp._normalize();return new myVector(b.orientation[O_FWD], p.delT, tmp);		
 		}
 	}
 	
@@ -109,7 +109,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 		double chance;
 		for(myBoid dinner : b.preyFlk.values()){
 			chance = ThreadLocalRandom.current().nextDouble();
-			if(chance < killPct){b.eat(dinner.mass);dinner.killMe("Eaten by predator : "+b.ID);;return;}//kill him next update by setting starveCntr = 0;
+			if(chance < killPct){b.eat(dinner.mass);dinner.killMe("Eaten by predator : "+b.ID);return;}//kill him next update by setting dead flag
 		}
 	}//kill
 	
@@ -165,8 +165,8 @@ public class myUpdateStencil implements Callable<Boolean> {
 	}
 	
 	//integrator
-	public myPoint integrate(myVector stateDot, myPoint state){		return myPoint._add(state, myVector._mult(stateDot, f.delT));}
-	public myVector integrate(myVector stateDot, myVector state){	return myVector._add(state, myVector._mult(stateDot, f.delT));}
+	public myPoint integrate(myVector stateDot, myPoint state){		return myPoint._add(state, myVector._mult(stateDot, p.delT));}
+	public myVector integrate(myVector stateDot, myVector state){	return myVector._add(state, myVector._mult(stateDot, p.delT));}
 	
 	public void setValWrapCoordsForDraw(myPoint _coords){_coords.set(((_coords.x+p.gridDimW) % p.gridDimW),((_coords.y+p.gridDimDp) % p.gridDimDp),((_coords.z+p.gridDimH) % p.gridDimH));	}//findValidWrapCoords	
 

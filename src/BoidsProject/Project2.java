@@ -36,7 +36,7 @@ public class Project2 extends PApplet{
 	//epsilon value for calculations
 	public final double epsValCalc = .00000001f;
 	//timestep for forward simulation
-	private double delT;
+	public double delT;
 	private final double baseDelT = .1f;
 	//how much force is exerted at click location -decays with distance sqrd
 	public final double msClickForce = 100000000;
@@ -158,7 +158,7 @@ public class Project2 extends PApplet{
 		displayUI();													//displays UI overlay
 		if (flags[saveAnim]) {	savePic();}
 	}// draw
-
+	
 	//**************************** display current frame ****************************	
 	//draw 3D rendering
 	public void draw3D(){
@@ -170,11 +170,11 @@ public class Project2 extends PApplet{
 					for(int i =0; i<numFlocks; ++i){flocks[i].clearOutBoids();}			//clear boid accumulators of neighbors, preds and prey  initAllMaps
 					for(int i =0; i<numFlocks; ++i){flocks[i].initAllMaps();}
 					if(flags[useOrigDistFuncs]){
-						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsOrigMultTH(delT);}					
+						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsOrigMultTH();}					
 					} else {						
-						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsLinMultTH(delT);}					
+						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsLinMultTH();}					
 					}
-					for(int i =0; i<numFlocks; ++i){flocks[i].updateBoidMovement(delT);}	
+					for(int i =0; i<numFlocks; ++i){flocks[i].updateBoidMovement();}	
 
 					if(flags[singleStep]){flags[runSim]=false;}
 					simCycles++;
@@ -217,7 +217,7 @@ public class Project2 extends PApplet{
 		resFrc._mult(mag);
 		return resFrc;	
 	}//forceAttract	
-	
+
 	//animation speed control for any animated constructs being drawn here
 	public double animMod(){	return animModMult*(baseAnimSpd);	}
 	//per-draw animation incrementer
@@ -239,6 +239,8 @@ public class Project2 extends PApplet{
 		switch (idx){
 			case debugMode : { setFlags(showFlkMbrs, flags[debugMode]); break;}//anything special for attractMode
 			case singleFlock : {initProgram();setFlockFlags(!flags[singleFlock]);break;}
+			case flkAvoidPred : {	if(flags[singleFlock]){flags[flkAvoidPred] = false;}break;}
+			case flkHunt : {		if(flags[singleFlock]){flags[flkAvoidPred] = false;}break;}
 			case useOrigDistFuncs : { fv.setDefaultWtVals(); break;}
 		}		
 	}//setFlags
@@ -882,6 +884,15 @@ public class Project2 extends PApplet{
 	//void vTextured(myPoint P, double u, double v) {vertex((float)P.x,(float)P.y,(float)P.z,(float)u,(float)v);}                          // vertex with texture coordinates
 	//void line(double x1, double y1, double z1, double x2, double y2, double z2){line((float)x1,(float)y1,(float)z1,(float)x2,(float)y2,(float)z2);}
 	void line(myPoint a, myPoint b){line((float)a.x,(float)a.y,(float)a.z,(float)b.x,(float)b.y,(float)b.z);}
+	void line(myPoint a, myPoint b, int stClr, int endClr){
+		beginShape();
+		this.strokeWeight(1.0f);
+		this.setColorValStroke(stClr);
+		this.vertex((float)a.x,(float)a.y,(float)a.z);
+		this.setColorValStroke(endClr);
+		this.vertex((float)b.x,(float)b.y,(float)b.z);
+		endShape();
+	}
 	void show(myPoint[] ara) {beginShape(); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                  
 	void curve(myPoint[] ara) {if(ara.length == 0){return;}beginShape(); curveVertex(ara[0]);for(int i=0;i<ara.length;++i){curveVertex(ara[i]);} curveVertex(ara[ara.length-1]);endShape(CLOSE);}                      // volume of tet 
 	void showContour(myPoint[] ara) {beginContour(); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endContour();}                      // volume of tet 

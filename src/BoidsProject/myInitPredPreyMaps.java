@@ -48,14 +48,17 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		//int numAdded = 0;
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
-			if((chk.ID == _src.ID) || (chk.neighLoc.containsKey(_src.ID))){continue;}
+			//if((chk.ID == _src.ID) || (chk.neighbors.containsKey(_src.ID))){continue;}
+			if(chk.ID == _src.ID){continue;}
 			distSq = myPoint._SqrDist(_src.coords, chk.coords);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
-			distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
-			_src.neighLoc.put(chk.ID,chk.coords);
-			//flock[c].neighbors.put(dist, _src);	
-			chk.neighLoc.put(_src.ID, _src.coords);		
+			//distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
+			//_src.neighLoc.put(chk.ID,chk.coords);
+			//chk.neighLoc.put(_src.ID, _src.coords);		
+			distSq = chkPutDistInMap(_src.neighLoc,chk.neighLoc,distSq,_src.coords, chk.coords);
+			_src.neighbors.put(distSq,chk);
+			chk.neighbors.put(distSq, _src);		
 		}
 	}//srchForNeighbors	
 	//populate arrays with closest neighbors, sorted by distance, so that dist array and neighbor array coincde
@@ -72,52 +75,68 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		myPoint tarLoc, srcLoc;
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
-			if((chk.ID == _src.ID) || (chk.neighLoc.containsKey(_src.ID))){continue;}
+			//if((chk.ID == _src.ID) || (chk.neighbors.containsKey(_src.ID))){continue;}
+			if(chk.ID == _src.ID){continue;}
 			tarLoc = new myPoint(chk.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
 			distSq = calcMinDistSq(_src.coords, chk.coords, srcLoc, tarLoc, min2Dist);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
-			distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
-			_src.neighLoc.put(chk.ID,tarLoc);
-			//flock[c].neighbors.put(distSq, _src);			
-			chk.neighLoc.put(_src.ID, srcLoc);		
+//			distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
+//			_src.neighLoc.put(distSq,tarLoc);
+//			chk.neighLoc.put(distSq, srcLoc);		
+			distSq = chkPutDistInMap(_src.neighLoc,chk.neighLoc,distSq,srcLoc, tarLoc);
+			_src.neighbors.put(distSq, chk);
+			chk.neighbors.put(distSq, _src);		
 		}
 	}//srchForNeighbors	
 
 	//non-torroidal boundaries
-	private void srchForPrey(myBoid _src, List<myBoid> flock){
+	private void srchForPrey(myBoid _src, List<myBoid> preyflock){
 		Double distSq;
-		for(myBoid chk : flock){
-			distSq = myPoint._SqrDist(_src.coords, chk.coords);
+		for(myBoid prey : preyflock){
+			distSq = myPoint._SqrDist(_src.coords, prey.coords);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another?
-			distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
-			//distSq = chkPutDistInMap(_src.preyFlk, distSq, flock[c]);
-			_src.preyFlkLoc.put(chk.ID,chk.coords);
-			//flock[c].predFlk.put(distSq, _src);			
-			chk.predFlkLoc.put(_src.ID, _src.coords);		
+			//distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
+			distSq = chkPutDistInMap(_src.preyFlkLoc,prey.predFlkLoc,distSq,_src.coords, prey.coords);
+			_src.preyFlk.put(distSq, prey);
 		}	
 	}
-	private void srchForPreyTor(myBoid _src, List<myBoid> flock){
+	private void srchForPreyTor(myBoid _src, List<myBoid> preyflock){
 		Double distSq, min2dist = min2DistPrey;
-		myPoint tarLoc, srcLoc;
-		for(myBoid chk : flock){
+		myPoint preyLoc, srcLoc;
+		for(myBoid prey : preyflock){
 		//for(int c = 0; c < flock.size(); ++c){
 			if(_src == null){return;}//_src boid might have been eaten
-			tarLoc = new myPoint(chk.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
-			distSq = calcMinDistSq(_src.coords, chk.coords, srcLoc, tarLoc, min2dist);
+			preyLoc = new myPoint(prey.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
+			distSq = calcMinDistSq(_src.coords, prey.coords, srcLoc, preyLoc, min2dist);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another - need to check both src and predflk
-			distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
-			//distSq = chkPutDistInMap(_src.preyFlk, distSq, flock[c]);
-			_src.preyFlkLoc.put(chk.ID,tarLoc);
-			//flock[c].predFlk.put(distSq, _src);						
-			chk.predFlkLoc.put(_src.ID, srcLoc);		
+			//distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
+			distSq = chkPutDistInMap(_src.preyFlkLoc,prey.predFlkLoc,distSq,srcLoc, preyLoc);
+			_src.preyFlk.put(distSq, prey);	
 		}	
 	}	
-	//need to check 2 flocks for pred - this will make sure any predators or prey at the same distance as other preds/prey will get moved a bit further away(instead of colliding)
-	private Double chkPutDistInMap(ConcurrentSkipListMap<Double, myBoid> smap,ConcurrentSkipListMap<Double, myBoid> dmap, Double distSq, myBoid _sboid, myBoid _dboid){
-		myBoid chks4d = smap.get(distSq),
+//	//need to check 2 flocks for pred - this will make sure any predators or prey at the same distance as other preds/prey will get moved a bit further away(instead of colliding)
+//	private Double chkPutDistInMapBoid(ConcurrentSkipListMap<Double, myBoid> smap,ConcurrentSkipListMap<Double, myBoid> dmap, Double distSq, myBoid _sboid, myBoid _dboid){
+//		myBoid chks4d = smap.get(distSq),
+//				chkd4s = dmap.get(distSq);
+//		//int iter=0;
+//		while((chks4d != null) || (chkd4s != null)){
+//			//replace chk	if not null
+//			distSq *= 1.0000001;//mod distance some tiny amount
+//			chks4d = smap.get(distSq);
+//			chkd4s = dmap.get(distSq);
+//			//System.out.println("chkPutDistInMap collision : " + distSq + " iter : " + iter++ );
+//		}
+//		chks4d = smap.put(distSq, _dboid);	
+//		chkd4s = dmap.put(distSq, _sboid);
+//		return distSq;
+//	}//chkDistInMap
+	
+	//check if src boid map or tar boid map contain passed dist already - if so, increase dist a bit to put in unoccupied location in map
+	private Double chkPutDistInMap(ConcurrentSkipListMap<Double, myPoint> smap,ConcurrentSkipListMap<Double, myPoint> dmap, Double distSq, myPoint _sLoc, myPoint _dLoc){
+		myPoint chks4d = smap.get(distSq),
 				chkd4s = dmap.get(distSq);
 		//int iter=0;
 		while((chks4d != null) || (chkd4s != null)){
@@ -127,12 +146,12 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 			chkd4s = dmap.get(distSq);
 			//System.out.println("chkPutDistInMap collision : " + distSq + " iter : " + iter++ );
 		}
-		chks4d = smap.put(distSq, _dboid);	
-		chkd4s = dmap.put(distSq, _sboid);
+		chks4d = smap.put(distSq, _dLoc);	
+		chkd4s = dmap.put(distSq, _sLoc);
 		return distSq;
 	}//chkDistInMap
 	
-	//finds closest dimension (for , returns square of that distance
+	//finds closest dimension - returns square of that distance
 	public double calcMinDist1D(double p1, double p2, double dim, double[] newP1, double[] newP2){
 		double 	d1 = (p1-p2),		d1s = d1*d1,
 				d2 = (p1-(p2-dim)),	d2s = d2*d2,
@@ -145,12 +164,11 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 			else {				newP1[0] = p1-dim;newP2[0] = p2+dim;return d3s;}}	//d3is the min
 	}//calcMinDist1D
 	
-	//returns the minimum sq length vector from p1 to p2
-	//taking into account torroidal mapping
-	public Double calcMinDistSq(myPoint pt1, myPoint pt2, myPoint newPt1, myPoint newPt2, double rad2){
+	//returns the minimum sq length vector from p1 to p2 for torroidal mapping; puts "virtual location" of torroidal mapped distances in newPt1 and newPt2
+	public Double calcMinDistSq(myPoint pt1, myPoint pt2, myPoint newPt1, myPoint newPt2, double minSqDist){
 		Double dist = myPoint._SqrDist(pt1, pt2);
-		if(dist <= 1.1f*rad2){return dist;}			//means points are already closer to each other in regular space so they don't need to be special referenced.
-		//we're here because two like-species boids are further from each other than 2x the passed radius - now we have to find the closest they could be to each other
+		if(dist <= minSqDist){return dist;}			//means points are already closer to each other in regular space so they don't need to be special referenced.
+		//we're here because two boids are further from each other than the passed distance - now we have to find the closest they could be to each other given torroidal wrapping
 		double[] newP1 = new double[]{0}, newP2 = new double[]{0};
 		double dx = calcMinDist1D(pt1.x, pt2.x, p.gridDimW ,newP1, newP2);
 		newPt1.x = newP1[0];newPt2.x = newP2[0];
@@ -165,6 +183,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		if(tor){
 			for(myBoid b : bAra){	findMyNeighborsTor(b);		}						//find neighbors to each boid	
 			if(p.flags[p.flkHunt] &&(f!=pry)){//f!=pry means only 1 flock
+				//System.out.println("Prey flock for " + f.name + " = " + pry.name);
 				for(myBoid b : bAra){	if(b.isHungry()){srchForPreyTor(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		} else {
