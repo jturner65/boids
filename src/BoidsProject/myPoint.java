@@ -148,7 +148,7 @@ class myVector extends myPoint{
 	
 	myVector(myVector a, double _y, myVector b) {super(a,_y,b);this._mag();	}//interp cnstrctr
 	public void set(double _x, double _y, double _z){ super.set(_x, _y, _z); this._mag(); }                                               //set 3 args 
-	public void set(myVector p){ this.x = p.x; this.y = p.y; this.z = p.z;  this._mag();}                                                                   //set 1 args
+	public void set(myVector p){ this.x = p.x; this.y = p.y; this.z = p.z;  this.magn = p.magn; this.sqMagn = p.sqMagn;}                                                                   //set 1 args
 	public void set(double _x, double _y, double _z, double _sqMagn){ super.set(_x, _y, _z); this.sqMagn = _sqMagn; }                                                                     //set 3 args 
 	
 	public myVector _mult(double n){ super._mult(n); this._mag(); return this; }                                                     //_mult 3 args  

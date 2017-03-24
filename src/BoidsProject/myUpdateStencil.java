@@ -124,15 +124,23 @@ public class myUpdateStencil implements Callable<Boolean> {
 			if(b.velocity[0].magn < f.fv.minVelMag[b.type]){b.velocity[0]._scale(f.fv.minVelMag[b.type]);}
 			b.coords.set(integrate(b.velocity[0], b.coords));												// myVector._add(coords[0], myVector._mult(velocity[1], p.delT));	
 			setValWrapCoordsForDraw(b.coords);
-			b.setOrientation();
+			setOrientation(b);
+			//b.setOrientation();
 		}
 		if (p.flags[p.flkSpawn]) {
-			for(myBoid b : bAra){
+			for(myBoid b : bAra){//check every boid to reproduce
 				if(b.bd_flags[myBoid.isDead]){
 					//System.out.println("Dead boid in bAra in myUpdateStencil reproduce : ID : " + b.ID);
 					continue;
 				}
 				reproduce(b);
+			}
+			for(myBoid b : bAra){//update spa
+				if(b.bd_flags[myBoid.isDead]){
+					//System.out.println("Dead boid in bAra in myUpdateStencil update : ID : " + b.ID);
+					continue;
+				}			
+				b.updateSpawnCntr();
 			}
 		}
 		if (p.flags[p.flkHunt]) {//see if near enough to prey to eat it
@@ -144,12 +152,15 @@ public class myUpdateStencil implements Callable<Boolean> {
 				hunt(b);
 			}
 		}
-		for(myBoid b : bAra){
-			if(b.bd_flags[myBoid.isDead]){
-				//System.out.println("Dead boid in bAra in myUpdateStencil update : ID : " + b.ID);
-				continue;
-			}			
-			b.updateBoidCountersMT();
+		if (p.flags[p.flkHunger]){
+			for(myBoid b : bAra){
+				if(b.bd_flags[myBoid.isDead]){
+					//System.out.println("Dead boid in bAra in myUpdateStencil updHunger : ID : " + b.ID);
+					continue;
+				}			
+				b.updateHungerCntr();
+			}
+			
 		}
 	}
 	

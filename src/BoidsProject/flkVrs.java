@@ -50,8 +50,9 @@ public class flkVrs {
 	public double[] maxVelMag = new double[]{180, 180, 180},		//max velocity for flock member
 				minVelMag;										//min velocity for flock member
 
-	public double[] defWtAra = new double[]{.5f, .75f, .5f, 1.5f, .5f, .1f},			//default array of weights for different forces
-			MaxWtAra = new double[]{5, 5, 5, 5, 5, 5},								
+	public final double[] defWtAra = new double[]{.5f, .75f, .5f, 1.5f, .5f, .1f};						//default array of weights for different forces
+	public final double[] defOrigWtAra = new double[]{5.0f, 12.0f, 7.0f, .5f, 15.0f, 10.0f};			//default array of weights for different forces
+	public double[] MaxWtAra = new double[]{15, 15, 15, 15, 15, 15},								
 			MinWtAra = new double[]{.01f, .01f, .01f, .01f, .001f, .001f},			
 			MaxSpAra = new double[]{1,10000,100000},								
 			MinSpAra = new double[]{.001f, 100, 100},			
@@ -84,10 +85,18 @@ public class flkVrs {
 		predRad = new double[]{500,500,500};					//radius to avoid pred/find prey	
 		//wts = new double[][]{{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f}};
 		//% of total force allowed for each component
-		wts = new double[3][];//{defWtAra, defWtAra,	defWtAra};
-		for(int i=0;i<3;++i){double[] tmp = new double[defWtAra.length]; System.arraycopy( defWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}
+		setDefaultWtVals();
 		maxFrcs = new double[][]{{100,200,100,10,400,20},{100,200,100,10,400,20},{100,200,100,10,400,20}};			//maybe scale forces
 		minVelMag = new double[]{maxVelMag[0]*.0025f, maxVelMag[1]*.0025f, maxVelMag[2]*.0025f};
+	}
+	//if set default weight mults based on whether using force calcs based on original inverted distance functions or linear distance functions
+	public void setDefaultWtVals(){
+		wts = new double[3][];//{defWtAra, defWtAra,	defWtAra};
+		if(p.flags[p.useOrigDistFuncs]){
+			for(int i=0;i<3;++i){double[] tmp = new double[defOrigWtAra.length]; System.arraycopy( defOrigWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}			
+		} else {
+			for(int i=0;i<3;++i){double[] tmp = new double[defWtAra.length]; System.arraycopy( defWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}
+		}		
 	}
 //	public void setBoatColor(int type, int[] sailColor){
 //		ThreadLocalRandom.current().nextInt(75);

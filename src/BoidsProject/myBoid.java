@@ -114,10 +114,18 @@ public class myBoid {
 		bd_flags[canSpawn] = true;
 	}
 	
-	public void clearAllBoidMaps(){	
-		neighbors.clear(); colliders.clear(); predFlk.clear();	preyFlk.clear();ptnWife.clear();
+	public void clearNeighborMaps(){	
+		neighbors.clear(); colliders.clear(); 
 		neighLoc.clear(); colliderLoc.clear();	//predFlkLoc.clear();	
-		preyFlkLoc.clear();ptnWifeLoc.clear();
+	}
+	public void clearHuntMaps(){
+		predFlk.clear();	preyFlk.clear(); 
+		preyFlkLoc.clear();		
+	}
+	
+	public void clearSpawnMaps(){
+		ptnWife.clear();
+		ptnWifeLoc.clear();		
 	}
 	
 	public void copySubSetBoidsCol(Double colRadSq){		
@@ -134,20 +142,11 @@ public class myBoid {
 				ptnWifeLoc.put(b.ID, neighLoc.get(b.ID));
 			}
 		}
-//		TreeMap<Double, myBoid> ptnMate 	= new TreeMap<Double, myBoid>();
-//		ptnMate.putAll(neighbors.subMap(0.0, spawnRadSq));
-//		for(Double dist : ptnMate.keySet()){
-//			myBoid b = ptnMate.get(dist);
-//			if((b.gender==0)&&(b.canSpawn())){				
-//				ptnWife.put(dist, b);
-//				ptnWifeLoc.put(b.ID, neighLoc.get(b.ID));
-//			}
-//		}
 	}//copySubSetBoidsMate
 	public void haveChild(myPoint _bl, myVector _bVel, myVector _bFrc){bd_flags[hadChild]=true; birthLoc=_bl;birthVel=_bVel;birthForce=_bFrc;}
 	public boolean hadAChild(myPoint[] _bl, myVector[] _bVelFrc){if(bd_flags[hadChild]){bd_flags[hadChild]=false;_bl[0].set(birthLoc);_bVelFrc[0].set(birthVel);_bVelFrc[1].set(birthForce);return true;} else {return false;}}	
 	public int resetCntrs(int cntrBseVal, double mod){return (int)(cntrBseVal*(1+mod));}
-	
+	//only reset spawn counters once boid has spawned
 	public void hasSpawned(){spawnCntr = resetCntrs(fv.spawnFreq[type],ThreadLocalRandom.current().nextDouble()); bd_flags[canSpawn] = false;}
 	public boolean canSpawn(){return bd_flags[canSpawn];}
 	public void eat(double tarMass){	starveCntr = resetCntrs(fv.eatFreq[type],tarMass);bd_flags[isHungry]=false;}
@@ -155,15 +154,16 @@ public class myBoid {
 	public boolean isHungry(){return bd_flags[isHungry];}
 	//init bd_flags state machine
 	public void initbd_flags(){bd_flags = new boolean[numbd_flags];for(int i=0;i<numbd_flags;++i){bd_flags[i]=false;}}
-
-	
-	//update all counters that determine state of boid
-	public void updateBoidCountersMT(){
+	//update hunger counters
+	public void updateHungerCntr(){
 		starveCntr--;
-		if (starveCntr<=0){killMe("Starvation");}
+		if (starveCntr<=0){killMe("Starvation");}		
+		bd_flags[isHungry] = (bd_flags[isHungry] || (p.random(fv.eatFreq[type])>=starveCntr)); //once he's hungry he stays hungry unless he eats (hungry set to false elsewhere)
+	}
+	//update spawn counters
+	public void updateSpawnCntr(){
 		spawnCntr--;
 		bd_flags[canSpawn]=(spawnCntr<=0);
-		bd_flags[isHungry] = (bd_flags[isHungry] || (p.random(fv.eatFreq[type])>=starveCntr)); //once he's hungry he stays hungry unless he eats (hungry set to false elsewhere)
 	}//updateBoidCounters	
 	
 	//initialize newborn velocity, forces, and orientation
@@ -173,34 +173,33 @@ public class myBoid {
 		//setOrientation();
 	}
 	
-	public void setOrientation(){
-		//find new orientation at new coords - creature is oriented in local axes as forward being positive z and up being positive y vectors correspond to columns, x/y/z elements correspond to rows
-		orientation[O_FWD].set(getFwdVec());
-		orientation[O_UP].set(getUpVec());	
-		orientation[O_RHT] = orientation[O_UP]._cross(orientation[O_FWD]); //sideways is cross of up and forward - backwards(righthanded)
-		orientation[O_RHT].set(orientation[O_RHT]._normalize());
-		//need to recalc up?  may not be perp to normal
-		if(Math.abs(orientation[O_FWD]._dot(orientation[O_UP])) > p.epsValCalc){
-			orientation[O_UP] = orientation[O_FWD]._cross(orientation[O_RHT]); //sideways is cross of up and forward
-			orientation[O_UP].set(orientation[O_UP]._normalize());
-		}
-		O_axisAngle = toAxisAngle();
-	}
+//	public void setOrientation(){
+//		//find new orientation at new coords - creature is oriented in local axes as forward being positive z and up being positive y vectors correspond to columns, x/y/z elements correspond to rows
+//		orientation[O_FWD].set(getFwdVec());
+//		orientation[O_UP].set(getUpVec());	
+//		orientation[O_RHT] = orientation[O_UP]._cross(orientation[O_FWD]); //sideways is cross of up and forward - backwards(righthanded)
+//		orientation[O_RHT].set(orientation[O_RHT]._normalize());
+//		//need to recalc up?  may not be perp to normal
+//		if(Math.abs(orientation[O_FWD]._dot(orientation[O_UP])) > p.epsValCalc){
+//			orientation[O_UP] = orientation[O_FWD]._cross(orientation[O_RHT]); //sideways is cross of up and forward
+//			orientation[O_UP].set(orientation[O_UP]._normalize());
+//		}
+//		O_axisAngle = toAxisAngle();
+//	}
 	
-	private myVector getFwdVec(){				
-		if( velocity[0].magn==0){			return orientation[O_FWD]._normalize();		}
-		else {		
-			myVector tmp = velocity[0].cloneMe();	
-			tmp._normalize();return new myVector(orientation[O_FWD], f.delT, tmp);		
-		}
-	}
-	
-	private myVector getUpVec(){		
-		if (Math.abs(orientation[O_FWD]._dot(myVector.UP) -1)< p.epsValCalc){
-			return myVector._cross(orientation[O_RHT], orientation[O_FWD]);
-		}
-		return myVector.UP.cloneMe();
-	}
+//	private myVector getFwdVec(){				
+//		if( velocity[0].magn==0){			return orientation[O_FWD]._normalize();		}
+//		else {		
+//			myVector tmp = velocity[0].cloneMe();	
+//			tmp._normalize();return new myVector(orientation[O_FWD], f.delT, tmp);		
+//		}
+//	}	
+//	private myVector getUpVec(){		
+//		if (Math.abs(orientation[O_FWD]._dot(myVector.UP) -1)< p.epsValCalc){
+//			return myVector._cross(orientation[O_RHT], orientation[O_FWD]);
+//		}
+//		return myVector.UP.cloneMe();
+//	}
 
 	//align the boid along the current orientation matrix
 	private void alignBoid(){
@@ -273,39 +272,39 @@ public class myBoid {
 //		}
 	}//animIncr		
 
-	public double[] toAxisAngle() {
-		double angle, rt2 = .5f*Math.sqrt(2),x=rt2,y=rt2,z=rt2,s;
-		if ((Math.abs(orientation[O_FWD].y-orientation[O_RHT].x) < p.epsValCalc)
-		  && (Math.abs(orientation[O_UP].x-orientation[O_FWD].z) < p.epsValCalc)
-		  && (Math.abs(orientation[O_RHT].z-orientation[O_UP].y) < p.epsValCalc)) {			//checking for rotational singularity
-			// angle == 0
-			if ((Math.abs(orientation[O_FWD].y+orientation[O_RHT].x) < 1) && (Math.abs(orientation[O_FWD].z+orientation[O_UP].x) < 1) && (Math.abs(orientation[O_RHT].z+orientation[O_UP].y) < 1)
-			  && (Math.abs(orientation[O_FWD].x+orientation[O_RHT].y+orientation[O_UP].z-3) < 1)) {	return new double[]{0,1,0,0}; }
-			// angle == pi
-			angle = PConstants.PI;
-			double fwd2x = (orientation[O_FWD].x+1)/2.0f,rht2y = (orientation[O_RHT].y+1)/2.0f,up2z = (orientation[O_UP].z+1)/2.0f,
-				fwd2y = (orientation[O_FWD].y+orientation[O_RHT].x)/4.0f, fwd2z = (orientation[O_FWD].z+orientation[O_UP].x)/4.0f, rht2z = (orientation[O_RHT].z+orientation[O_UP].y)/4.0f;
-			if ((fwd2x > rht2y) && (fwd2x > up2z)) { // orientation[O_FWD].x is the largest diagonal term
-				if (fwd2x< p.epsValCalc) {	x = 0;} else {			x = Math.sqrt(fwd2x);y = fwd2y/x;z = fwd2z/x;}
-			} else if (rht2y > up2z) { 		// orientation[O_RHT].y is the largest diagonal term
-				if (rht2y< p.epsValCalc) {	y = 0;} else {			y = Math.sqrt(rht2y);x = fwd2y/y;z = rht2z/y;}
-			} else { // orientation[O_UP].z is the largest diagonal term so base result on this
-				if (up2z< p.epsValCalc) {	z = 0;} else {			z = Math.sqrt(up2z);	x = fwd2z/z;y = rht2z/z;}
-			}
-			return new double[]{angle,x,y,z}; // return 180 deg rotation
-		}
-		//no singularities - handle normally
-		s = Math.sqrt((orientation[O_UP].y - orientation[O_RHT].z)*(orientation[O_UP].y - orientation[O_RHT].z)
-						+(orientation[O_FWD].z - orientation[O_UP].x)*(orientation[O_FWD].z - orientation[O_UP].x)
-						+(orientation[O_RHT].x - orientation[O_FWD].y)*(orientation[O_RHT].x - orientation[O_FWD].y)); // used to normalise
-		if (Math.abs(s) < p.epsValCalc){ s=1; }
-			// prevent divide by zero, should not happen if matrix is orthogonal -- should be caught by singularity test above
-		angle = -Math.acos(( orientation[O_FWD].x + orientation[O_RHT].y + orientation[O_UP].z - 1)/2);
-		x = (orientation[O_UP].y - orientation[O_RHT].z)/s;
-		y = (orientation[O_FWD].z - orientation[O_UP].x)/s;
-		z = (orientation[O_RHT].x - orientation[O_FWD].y)/s;
-	   return new double[]{angle,x,y,z};
-	}//toAxisAngle
+//	public double[] toAxisAngle() {
+//		double angle, rt2 = .5f*Math.sqrt(2),x=rt2,y=rt2,z=rt2,s;
+//		if ((Math.abs(orientation[O_FWD].y-orientation[O_RHT].x) < p.epsValCalc)
+//		  && (Math.abs(orientation[O_UP].x-orientation[O_FWD].z) < p.epsValCalc)
+//		  && (Math.abs(orientation[O_RHT].z-orientation[O_UP].y) < p.epsValCalc)) {			//checking for rotational singularity
+//			// angle == 0
+//			if ((Math.abs(orientation[O_FWD].y+orientation[O_RHT].x) < 1) && (Math.abs(orientation[O_FWD].z+orientation[O_UP].x) < 1) && (Math.abs(orientation[O_RHT].z+orientation[O_UP].y) < 1)
+//			  && (Math.abs(orientation[O_FWD].x+orientation[O_RHT].y+orientation[O_UP].z-3) < 1)) {	return new double[]{0,1,0,0}; }
+//			// angle == pi
+//			angle = PConstants.PI;
+//			double fwd2x = (orientation[O_FWD].x+1)/2.0f,rht2y = (orientation[O_RHT].y+1)/2.0f,up2z = (orientation[O_UP].z+1)/2.0f,
+//				fwd2y = (orientation[O_FWD].y+orientation[O_RHT].x)/4.0f, fwd2z = (orientation[O_FWD].z+orientation[O_UP].x)/4.0f, rht2z = (orientation[O_RHT].z+orientation[O_UP].y)/4.0f;
+//			if ((fwd2x > rht2y) && (fwd2x > up2z)) { // orientation[O_FWD].x is the largest diagonal term
+//				if (fwd2x< p.epsValCalc) {	x = 0;} else {			x = Math.sqrt(fwd2x);y = fwd2y/x;z = fwd2z/x;}
+//			} else if (rht2y > up2z) { 		// orientation[O_RHT].y is the largest diagonal term
+//				if (rht2y< p.epsValCalc) {	y = 0;} else {			y = Math.sqrt(rht2y);x = fwd2y/y;z = rht2z/y;}
+//			} else { // orientation[O_UP].z is the largest diagonal term so base result on this
+//				if (up2z< p.epsValCalc) {	z = 0;} else {			z = Math.sqrt(up2z);	x = fwd2z/z;y = rht2z/z;}
+//			}
+//			return new double[]{angle,x,y,z}; // return 180 deg rotation
+//		}
+//		//no singularities - handle normally
+//		s = Math.sqrt((orientation[O_UP].y - orientation[O_RHT].z)*(orientation[O_UP].y - orientation[O_RHT].z)
+//						+(orientation[O_FWD].z - orientation[O_UP].x)*(orientation[O_FWD].z - orientation[O_UP].x)
+//						+(orientation[O_RHT].x - orientation[O_FWD].y)*(orientation[O_RHT].x - orientation[O_FWD].y)); // used to normalise
+//		if (Math.abs(s) < p.epsValCalc){ s=1; }
+//			// prevent divide by zero, should not happen if matrix is orthogonal -- should be caught by singularity test above
+//		angle = -Math.acos(( orientation[O_FWD].x + orientation[O_RHT].y + orientation[O_UP].z - 1)/2);
+//		x = (orientation[O_UP].y - orientation[O_RHT].z)/s;
+//		y = (orientation[O_FWD].z - orientation[O_UP].x)/s;
+//		z = (orientation[O_RHT].x - orientation[O_FWD].y)/s;
+//	   return new double[]{angle,x,y,z};
+//	}//toAxisAngle
 	
 	public String toString(){
 		String result = "ID : " + ID + " Type : "+p.flkNames[f.type]+" | Mass : " + mass + " | Spawn CD "+spawnCntr + " | Starve CD " + starveCntr+"\n";

@@ -88,17 +88,13 @@ public class Project2 extends PApplet{
 	private void initOnce() {
 		flags = new boolean[numFlags];
 		flagColors = new int[numFlags][3];
-		for (int i = 0; i < numFlags; ++i) { flags[i] = true; flagColors[i] = new int[]{ThreadLocalRandom.current().nextInt(150),ThreadLocalRandom.current().nextInt(100),ThreadLocalRandom.current().nextInt(150)}; }	
-		flags[debugMode]	    = false;
-		flags[showFlkMbrs]		= false;
-		flags[showVelocity]		= false;
-		flags[saveAnim]	        = false;
-		flags[shiftKeyPressed]  = false;
-		flags[mouseClicked]  	= false;
-		flags[modView]	 	 	= false;                    
-		flags[singleStep] 		= false;
-		flags[flkAvoidPred]		= false;	
-		flags[flkHunt]			= false;
+		for (int i = 0; i < numFlags; ++i) { flags[i] = false; flagColors[i] = new int[]{ThreadLocalRandom.current().nextInt(150),ThreadLocalRandom.current().nextInt(100),ThreadLocalRandom.current().nextInt(150)}; }	
+		flags[drawBoids] = true;
+		flags[clearPath] = true;
+		flags[singleFlock] = true;
+		flags[useOrigDistFuncs] = true;
+		flags[useTorroid] = true;
+		flags[attractMode] = true;
 		showInfo = true;
 		textSize(txtSz);		
 		//thread executor for multithreading
@@ -173,7 +169,11 @@ public class Project2 extends PApplet{
 				if (flags[runSim]) {
 					for(int i =0; i<numFlocks; ++i){flocks[i].clearOutBoids();}			//clear boid accumulators of neighbors, preds and prey  initAllMaps
 					for(int i =0; i<numFlocks; ++i){flocks[i].initAllMaps();}
-					for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsMultTH(delT);}					
+					if(flags[useOrigDistFuncs]){
+						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsOrigMultTH(delT);}					
+					} else {						
+						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsLinMultTH(delT);}					
+					}
 					for(int i =0; i<numFlocks; ++i){flocks[i].updateBoidMovement(delT);}	
 
 					if(flags[singleStep]){flags[runSim]=false;}
@@ -238,9 +238,18 @@ public class Project2 extends PApplet{
 		flags[idx] = val;
 		switch (idx){
 			case debugMode : { setFlags(showFlkMbrs, flags[debugMode]); break;}//anything special for attractMode
-			case singleFlock : {initProgram();setFlags(flkHunt,!flags[singleFlock]);setFlags(flkAvoidPred,!flags[singleFlock]);break;}
+			case singleFlock : {initProgram();setFlockFlags(!flags[singleFlock]);break;}
+			case useOrigDistFuncs : { fv.setDefaultWtVals(); break;}
 		}		
 	}//setFlags
+	//only initially allow spawning, hunger and hunting in multi-flock sim
+	private void setFlockFlags(boolean val){
+		setFlags(flkHunt,val);
+		setFlags(flkAvoidPred,val);
+		setFlags(flkHunger,val);
+		setFlags(flkSpawn,val);
+	}
+	
 	//process keyboard input
 	public void keyPressed(){
 		switch (key){
@@ -385,14 +394,17 @@ public class Project2 extends PApplet{
 	public final int flkVelMatch 		= 13;			// on/off : flock velocity matching
 	public final int flkAvoidCol 		= 14;			// on/off : flock collision avoidance	
 	public final int flkWander 			= 15;			// on/off : flock wandering		
+	//hunting/spawning-related
 	public final int flkAvoidPred		= 16;			//turn on/off avoiding predators force and chasing prey force
 	public final int flkHunt			= 17;
-	public final int flkSpawn			= 18;			//allow breeding
+	public final int flkHunger			= 18;			//can get hungry	
+	public final int flkSpawn			= 19;			//allow breeding
 	
-	public final int clearPath 			= 19;			// whether or not to allow creatures to wander off the path i.e. clear the window every display	
-	public final int singleFlock		= 20;			// whether to restart with 1 flock or 3
+	public final int clearPath 			= 20;			// whether or not to allow creatures to wander off the path i.e. clear the window every display	
+	public final int singleFlock		= 21;			// whether to restart with 1 flock or 3
+	public final int useOrigDistFuncs	= 22;			//whether to use original reynolds-inspired dist functions or alternate linear dist functions in force calculations
 	// number of flags in the boolean flags array
-	public int numFlags 				= 21;
+	public int numFlags 				= 23;
 	
 	private boolean showInfo;							//only used to hide/show info at top of screen
 	
@@ -413,11 +425,13 @@ public class Project2 extends PApplet{
 			"Flock Vel Match", 	
 			"Flock Avoid Col", 	
 			"Flock Wander",		
-			"Avoid Predators",		
-			"Chase Prey",	
-			"Breed",
-			"Clear Path",
-			"Single -> Multiple flocks"
+			"Flee Predators",		
+			"Hunting enabled",	
+			"Starving enabled",
+			"Breeding enabled",
+			"Clear Travel Path",
+			"Show Single Flock",
+			"Use Orig Dist Funcs"
 			};
 	
 	public final String[] altFlagNames = {
@@ -437,11 +451,13 @@ public class Project2 extends PApplet{
 			"Flock Vel Match", 	
 			"Flock Avoid Col", 	
 			"Flock Wander",		
-			"Avoid Predators",		
-			"Chase Prey",	
-			"No Breeding",
-			"Clear Path",
-			"Multiple -> Single flock"
+			"Ignore Predators",		
+			"Hunting Disabled",
+			"Starving Disabled",
+			"Breeding Disabled",
+			"Show Travel Path",
+			"Show Multiple flock",
+			"Use Linear Dist Funcs"
 			};
 	
 	public int[][] flagColors;
@@ -449,7 +465,7 @@ public class Project2 extends PApplet{
 	//flags that can be modified by clicking on screen
 	public List<Integer> clkyFlgs = Arrays.asList(
 			debugMode, showVelocity, showFlkMbrs, drawBoids, saveAnim, singleStep, runSim, 
-			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt, flkSpawn, clearPath, singleFlock //, useGLSL
+			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt, flkHunger, flkSpawn, clearPath, singleFlock, useOrigDistFuncs //, useGLSL
 			);			
 	public double xOff = 20 , yOff = 20,// * (txtSz/12.0),			//offset values to render boolean menu on side of screen
 		  flval_xSt = 17, flval_ySt = (numFlags*yOff) + 125, 	//start of flock data area

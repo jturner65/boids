@@ -83,17 +83,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 			chk.neighLoc.put(_src.ID, srcLoc);		
 		}
 	}//srchForNeighbors	
-//	private Double chkPutDistInMap(TreeMap<Double, myBoid> map, Double distSq, myBoid boid){
-//		myBoid chk = map.put(distSq, boid);
-//		while(chk != null){
-//			//replace chk	if not null
-//			map.put(distSq, chk);						
-//			distSq *= 1.0000000001;//mod distance some tiny amount
-//			chk = map.put(distSq, boid);				
-//		}
-//		return distSq;
-//	}//chkDistInMap
-	
+
 	//non-torroidal boundaries
 	private void srchForPrey(myBoid _src, List<myBoid> flock){
 		Double distSq;
@@ -172,27 +162,19 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	}	
 		
 	public void run(){	
-		//myBoid b;
 		if(tor){
-			for(myBoid b : bAra){	
-				findMyNeighborsTor(b);
-			}						//find neighbors to each boid	
-			if(p.flags[p.flkHunt] &&(f!=pry)){//will == if only 1 flock
-				for(myBoid b : bAra){	
-					//b = bAra.get(c);
-					if(b.isHungry()){srchForPreyTor(b, pry.boidFlock);}}						//find neighbors to each boid		
+			for(myBoid b : bAra){	findMyNeighborsTor(b);		}						//find neighbors to each boid	
+			if(p.flags[p.flkHunt] &&(f!=pry)){//f!=pry means only 1 flock
+				for(myBoid b : bAra){	if(b.isHungry()){srchForPreyTor(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		} else {
 			for(myBoid b : bAra){	findMyNeighbors(b);}						//find neighbors to each boid		
 			if(p.flags[p.flkHunt] &&(f!=pry)){//will == if only 1 flock
-				for(myBoid b : bAra){	
-					if(b.isHungry()){srchForPrey(b, pry.boidFlock);}}						//find neighbors to each boid		
+				for(myBoid b : bAra){if(b.isHungry()){srchForPrey(b, pry.boidFlock);}}						//find neighbors to each boid		
 			}
 		}
-		//TODO modify to only perform this check if spawning enabled
-		for(myBoid b : bAra){	
-			if(b.canSpawn()){	b.copySubSetBoidsMate(spawnRadSq);	}
-		}
+		//find subset of neighbors who are potential mates
+		if (p.flags[p.flkSpawn]) {	for(myBoid b : bAra){	if(b.canSpawn()){	b.copySubSetBoidsMate(spawnRadSq);	}}	}
 	}//run()
 	
 	@Override
