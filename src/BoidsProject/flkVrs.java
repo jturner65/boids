@@ -78,7 +78,7 @@ public class flkVrs {
 		spawnRad = new double[]{colRad[0],colRad[1],colRad[2]};			//distance to spawn 
 		spawnFreq = new int[]{500,500,500}; 		//# of cycles that must pass before can spawn again
 		//required meal time
-		eatFreq = new int[]{2000,2000,2000}; 			//# cycles w/out food until starve to death
+		eatFreq = new int[]{500,500,500}; 			//# cycles w/out food until starve to death
 		killRad = new double[]{1,1,1};						//radius to kill * mass
 		killPct = new double[]{.01f, .01f, .01f};				//% chance to kill prey creature
 		//killPct = new double[]{.9f, .9f, .9f};				//% chance to kill prey creature
