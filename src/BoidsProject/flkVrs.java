@@ -14,11 +14,11 @@ public class flkVrs {
 	public myBoidFlock[] flocks;								//from p
 	//weight multiplier for forces - centering, avoidance, velocity matching and wander
 	
-	private final double neighborMult = .5f;							//multiplier for neighborhood consideration against zone size - all rads built off this
+	private final float neighborMult = .5f;							//multiplier for neighborhood consideration against zone size - all rads built off this
 	
-	public double[] dampConst = new double[]{.01f, .01f, .01f};					//multiplier for damping force, to slow boats down if nothing else acting on them
+	public float[] dampConst = new float[]{.01f, .01f, .01f};					//multiplier for damping force, to slow boats down if nothing else acting on them
 	
-	public double[] nghbrRad,									//radius of the creatures considered to be neighbors
+	public float[] nghbrRad,									//radius of the creatures considered to be neighbors
 					colRad,										//radius of creatures to be considered for colision avoidance
 					velRad,										//radius of creatures to be considered for velocity matching
 					predRad,									//radius for creature to be considered for pred/prey
@@ -31,12 +31,12 @@ public class flkVrs {
 				eatFreq,								 		//# cycles w/out food until starve to death
 				bodyColor = new int[]{Project2.gui_boatBody1, Project2.gui_boatBody2, Project2.gui_boatBody3  };	//idxs of body color for 3 types			
 	
-	double nghbrRadMax;							//max allowed neighborhood - min dim of cube
-	public double totMaxRad;						//max search distance for neighbors
+	float nghbrRadMax;							//max allowed neighborhood - min dim of cube
+	public float totMaxRad;						//max search distance for neighbors
 	public int nearCount;						//# of creatures required to have a neighborhood - some % of total # of creatures, or nearMinCnt, whichever is larger
 	public final int nearMinCnt = 5;			//smallest neighborhood size allowed -> 5 or total # of creatures, whichever is smaller
 	
-	public double[][] massForType = new double[][]{{2,4},{1,3},{.5f,2}},
+	public float[][] massForType = new float[][]{{2,4},{1,3},{.5f,2}},
 					maxFrcs,									//max forces for each flock, for each force type
 					wts;										//weights for flock calculations for each flock
 	//idx's of vars in wts arrays
@@ -47,18 +47,18 @@ public class flkVrs {
             		wFrcAvdPred = 4,							//idx in wts array for predator avoidance
             		wFrcChsPrey = 5;							//idx in wts array for prey chasing
 	
-	public double[] maxVelMag = new double[]{180, 180, 180},		//max velocity for flock member
+	public float[] maxVelMag = new float[]{180, 180, 180},		//max velocity for flock member
 				minVelMag;										//min velocity for flock member
 
-	public final double[] defWtAra = new double[]{.5f, .75f, .5f, .5f, .5f, .1f};						//default array of weights for different forces
-	public final double[] defOrigWtAra = new double[]{5.0f, 12.0f, 7.0f, 3.5f, .5f, .1f};			//default array of weights for different forces
-	public double[] MaxWtAra = new double[]{15, 15, 15, 15, 15, 15},								
-			MinWtAra = new double[]{.01f, .01f, .01f, .01f, .001f, .001f},			
-			MaxSpAra = new double[]{1,10000,100000},								
-			MinSpAra = new double[]{.001f, 100, 100},			
-			MaxHuntAra = new double[]{.1f,10000,100000},							
-			MinHuntAra = new double[]{.00001f, 10, 100};		
-	public double[] maxFrc = new double[]{200,200,200};
+	public final float[] defWtAra = new float[]{.5f, .75f, .5f, .5f, .5f, .1f};						//default array of weights for different forces
+	public final float[] defOrigWtAra = new float[]{5.0f, 12.0f, 7.0f, 3.5f, .5f, .1f};			//default array of weights for different forces
+	public float[] MaxWtAra = new float[]{15, 15, 15, 15, 15, 15},								
+			MinWtAra = new float[]{.01f, .01f, .01f, .01f, .001f, .001f},			
+			MaxSpAra = new float[]{1,10000,100000},								
+			MinSpAra = new float[]{.001f, 100, 100},			
+			MaxHuntAra = new float[]{.1f,10000,100000},							
+			MinHuntAra = new float[]{.00001f, 10, 100};		
+	public float[] maxFrc = new float[]{200,200,200};
 	
 	public static final ArrayList<String> typeNames = new ArrayList<String>(Arrays.asList (new String[] {"Galley","Pirate", "Corsair"} ));	
 	
@@ -69,34 +69,34 @@ public class flkVrs {
 	}
 	
 	public void initFlockVals(){
-		nghbrRadMax = PApplet.min(p.gridDimDp, p.gridDimH, p.gridDimW)*neighborMult;
-		nghbrRad = new double[]{nghbrRadMax, nghbrRadMax*.85f, nghbrRadMax*.6f};
-		colRad  = new double[]{nghbrRad[0]*.1f, nghbrRad[1]*.1f, nghbrRad[2]*.1f}; 
-		velRad  = new double[]{nghbrRad[0]*.5f, nghbrRad[1]*.5f, nghbrRad[2]*.5f}; 			
+		nghbrRadMax = PApplet.min(p.gridDimY, p.gridDimZ, p.gridDimX)*neighborMult;
+		nghbrRad = new float[]{nghbrRadMax, nghbrRadMax*.85f, nghbrRadMax*.6f};
+		colRad  = new float[]{nghbrRad[0]*.1f, nghbrRad[1]*.1f, nghbrRad[2]*.1f}; 
+		velRad  = new float[]{nghbrRad[0]*.5f, nghbrRad[1]*.5f, nghbrRad[2]*.5f}; 			
 		//weight multiplier for forces - centering, avoidance, velocity matching and wander
-		spawnPct = new double[]{.05f, .075f, .1f};		//% chance to reproduce given the boids breech the required radius
-		spawnRad = new double[]{colRad[0],colRad[1],colRad[2]};			//distance to spawn 
+		spawnPct = new float[]{.05f, .075f, .1f};		//% chance to reproduce given the boids breech the required radius
+		spawnRad = new float[]{colRad[0],colRad[1],colRad[2]};			//distance to spawn 
 		spawnFreq = new int[]{500,500,500}; 		//# of cycles that must pass before can spawn again
 		//required meal time
 		eatFreq = new int[]{500,500,500}; 			//# cycles w/out food until starve to death
-		killRad = new double[]{1,1,1};						//radius to kill * mass
-		killPct = new double[]{.01f, .01f, .01f};				//% chance to kill prey creature
-		//killPct = new double[]{.9f, .9f, .9f};				//% chance to kill prey creature
+		killRad = new float[]{1,1,1};						//radius to kill * mass
+		killPct = new float[]{.01f, .01f, .01f};				//% chance to kill prey creature
+		//killPct = new float[]{.9f, .9f, .9f};				//% chance to kill prey creature
 		//predator range for a flock
-		predRad = new double[]{500,500,500};					//radius to avoid pred/find prey	
-		//wts = new double[][]{{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f}};
+		predRad = new float[]{500,500,500};					//radius to avoid pred/find prey	
+		//wts = new float[][]{{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f},{.5f, 1.0f, .5f, 3, .1f, .1f}};
 		//% of total force allowed for each component
 		setDefaultWtVals();
-		maxFrcs = new double[][]{{100,200,100,10,400,20},{100,200,100,10,400,20},{100,200,100,10,400,20}};			//maybe scale forces
-		minVelMag = new double[]{maxVelMag[0]*.0025f, maxVelMag[1]*.0025f, maxVelMag[2]*.0025f};
+		maxFrcs = new float[][]{{100,200,100,10,400,20},{100,200,100,10,400,20},{100,200,100,10,400,20}};			//maybe scale forces
+		minVelMag = new float[]{maxVelMag[0]*.0025f, maxVelMag[1]*.0025f, maxVelMag[2]*.0025f};
 	}
 	//if set default weight mults based on whether using force calcs based on original inverted distance functions or linear distance functions
 	public void setDefaultWtVals(){
-		wts = new double[3][];//{defWtAra, defWtAra,	defWtAra};
+		wts = new float[3][];//{defWtAra, defWtAra,	defWtAra};
 		if(p.flags[p.useOrigDistFuncs]){
-			for(int i=0;i<3;++i){double[] tmp = new double[defOrigWtAra.length]; System.arraycopy( defOrigWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}			
+			for(int i=0;i<3;++i){float[] tmp = new float[defOrigWtAra.length]; System.arraycopy( defOrigWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}			
 		} else {
-			for(int i=0;i<3;++i){double[] tmp = new double[defWtAra.length]; System.arraycopy( defWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}
+			for(int i=0;i<3;++i){float[] tmp = new float[defWtAra.length]; System.arraycopy( defWtAra, 0, tmp, 0, defWtAra.length );wts[i]=tmp;}
 		}		
 	}
 //	public void setBoatColor(int type, int[] sailColor){
@@ -120,10 +120,10 @@ public class flkVrs {
 		default :{sailColor[0] = 180 + ThreadLocalRandom.current().nextInt(75);sailColor[1] = 180 + ThreadLocalRandom.current().nextInt(75);	sailColor[2] = 180 + ThreadLocalRandom.current().nextInt(75);sailColor[3] = 255;break;}
 		}
 	}//setBoatColor	
-	public double getInitMass(int type){return (massForType[type][0] + (massForType[type][1] - massForType[type][0])*Math.random());}
+	public float getInitMass(int type){return (float)(massForType[type][0] + (massForType[type][1] - massForType[type][0])*ThreadLocalRandom.current().nextFloat());}
 	
 	//handles all modification of flock values from ui - wIdx is manufactured based on location in ui click area
-	public void modFlkVal(int fIdx, int wIdx, double mod){
+	public void modFlkVal(int fIdx, int wIdx, float mod){
 		//System.out.println("Attempt to modify flock : " + p.flkNames[fIdx] + " value : " + wIdx + " by " + mod);
 		if((fIdx==-1)||(wIdx==-1)){return;}
 		switch(wIdx){
@@ -156,18 +156,18 @@ public class flkVrs {
 		if(modV){velRad[fIdx] = Math.min(Math.max(colRad[fIdx],velRad[fIdx]),.9f*nghbrRad[fIdx]);}//when col or neighbor rad modded
 	}
 	
-	private void modVal(int fIdx, int[] vals, double max, double min, int mod){	int oldVal = vals[fIdx];vals[fIdx] += mod;if(!(inRange(vals[fIdx], max, min))){vals[fIdx] = oldVal;}}	
-	private void modVal(int fIdx, double[] vals, double max, double min, double mod){double oldVal = vals[fIdx];vals[fIdx] += mod;	if(!(inRange(vals[fIdx], max, min))){vals[fIdx] = oldVal;}}
+	private void modVal(int fIdx, int[] vals, float max, float min, int mod){	int oldVal = vals[fIdx];vals[fIdx] += mod;if(!(inRange(vals[fIdx], max, min))){vals[fIdx] = oldVal;}}	
+	private void modVal(int fIdx, float[] vals, float max, float min, float mod){float oldVal = vals[fIdx];vals[fIdx] += mod;	if(!(inRange(vals[fIdx], max, min))){vals[fIdx] = oldVal;}}
 	
 	
 	//modify a particular flock force weight for a particular flock
-	private void modFlkWt(int fIdx, int wIdx, double mod){
-		double oldVal = this.wts[fIdx][wIdx];
+	private void modFlkWt(int fIdx, int wIdx, float mod){
+		float oldVal = this.wts[fIdx][wIdx];
 		this.wts[fIdx][wIdx] += mod;
 		if(!(inRange(wts[fIdx][wIdx], MaxWtAra[wIdx], MinWtAra[wIdx]))){this.wts[fIdx][wIdx] = oldVal;}		
 	}
 
-	public boolean inRange(double val, double max, double min){return ((val<max)&&(val>min));}	
+	public boolean inRange(float val, float max, float min){return ((val<max)&&(val>min));}	
 	public String[] getData(int s){
 		String res[] = new String[8];
 		int idx = 0;

@@ -16,14 +16,14 @@ public class myBoidFlock {
 	
 	public flkVrs fv;
 	
-	public final double  distGrwthMod = 1.1f,	//how the radius should grow to look for more creatures for neighbors, if haven't satisfied minimum number
+	public final float  distGrwthMod = 1.1f,	//how the radius should grow to look for more creatures for neighbors, if haven't satisfied minimum number
 						nearPct = .4f;			//% size of total population to use as neighborhood target, if enough creatures
 	
-	public double totMaxRad;						//max search distance for neighbors
+	public float totMaxRad;						//max search distance for neighbors
 	public int nearCount;						//# of creatures required to have a neighborhood - some % of total # of creatures, or nearMinCnt, whichever is larger
 	public final int nearMinCnt = 5;			//smallest neighborhood size allowed -> 5 or total # of creatures, whichever is smaller
 	
-	//public double delT;							//boid sim timestep - set at beginning of every update cycle
+	//public float delT;							//boid sim timestep - set at beginning of every update cycle
 	
 	public boolean[] bflk_flags;	
 	public final static int useLifespan 	= 0,		//uses lifespan value of cell
@@ -50,7 +50,7 @@ public class myBoidFlock {
 		setNumBoids(_numBoids);
 		initbflk_flags(true);
 		bflk_flags[useLifespan]=false;
-		totMaxRad = p.gridDimW + p.gridDimDp + p.gridDimH;
+		totMaxRad = p.gridDimX + p.gridDimY + p.gridDimZ;
 		type = _type;
 
 		callFwdBoidCalcs= new ArrayList<myFwdStencil>();
@@ -85,10 +85,10 @@ public class myBoidFlock {
 	
 
 	//finds valid coordinates if torroidal walls 
-	public myPoint findValidWrapCoordsForDraw(myPoint _coords){return new myPoint(((_coords.x+p.gridDimW) % p.gridDimW),((_coords.y+p.gridDimDp) % p.gridDimDp),((_coords.z+p.gridDimH) % p.gridDimH));	}//findValidWrapCoords	
-	public void setValidWrapCoordsForDraw(myPoint _coords){_coords.set(((_coords.x+p.gridDimW) % p.gridDimW),((_coords.y+p.gridDimDp) % p.gridDimDp),((_coords.z+p.gridDimH) % p.gridDimH));	}//findValidWrapCoords	
-	public double calcRandLocation(double randNum1, double randNum2, double sqDim, double mathCalc, double mult){return ((sqDim/2.0f) + (randNum2 * (sqDim/3.0f) * mathCalc * mult));}
-	public myPoint randBoidStLoc(double mult){		return new myPoint(ThreadLocalRandom.current().nextDouble(p.gridDimW),ThreadLocalRandom.current().nextDouble(p.gridDimDp),ThreadLocalRandom.current().nextDouble(p.gridDimH));	}
+	public myPointf findValidWrapCoordsForDraw(myPointf _coords){return new myPointf(((_coords.x+p.gridDimX) % p.gridDimX),((_coords.y+p.gridDimY) % p.gridDimY),((_coords.z+p.gridDimZ) % p.gridDimZ));	}//findValidWrapCoords	
+	public void setValidWrapCoordsForDraw(myPointf _coords){_coords.set(((_coords.x+p.gridDimX) % p.gridDimX),((_coords.y+p.gridDimY) % p.gridDimY),((_coords.z+p.gridDimZ) % p.gridDimZ));	}//findValidWrapCoords	
+	public float calcRandLocation(float randNum1, float randNum2, float sqDim, float mathCalc, float mult){return ((sqDim/2.0f) + (randNum2 * (sqDim/3.0f) * mathCalc * mult));}
+	public myPointf randBoidStLoc(float mult){		return new myPointf(ThreadLocalRandom.current().nextFloat()*p.gridDimX,ThreadLocalRandom.current().nextFloat()*p.gridDimY,ThreadLocalRandom.current().nextFloat()*p.gridDimZ);	}
 	
 	public void setNumBoids(int _numBoids){
 		numBoids = _numBoids;
@@ -102,7 +102,7 @@ public class myBoidFlock {
 	}//modBoidPop
 	
 	public myBoid addBoid(){	return addBoid(randBoidStLoc(1));	}	
-	public myBoid addBoid(myPoint stLoc){
+	public myBoid addBoid(myPointf stLoc){
 		myBoid tmp = new myBoid(p,this, stLoc, type, fv); 
 		boidFlock.add(tmp);
 		setNumBoids(boidFlock.size());
@@ -177,8 +177,8 @@ public class myBoidFlock {
 		}							//apply update
 		try {callUpdFutures = p.th_exec.invokeAll(callUbdBoidCalcs);for(Future<Boolean> f: callUpdFutures) { f.get(); }} catch (Exception e) { e.printStackTrace(); }		    	
     	//update - remove dead, add babies
-        myPoint[] bl = new myPoint[]{new myPoint()};
-        myVector[] bVelFrc  = new myVector[]{new myVector(),new myVector()};
+        myPointf[] bl = new myPointf[]{new myPointf()};
+        myVectorf[] bVelFrc  = new myVectorf[]{new myVectorf(),new myVectorf()};
         myBoid b;
         for(int c = 0; c < boidFlock.size(); ++c){
         	b = boidFlock.get(c);

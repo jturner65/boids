@@ -15,7 +15,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	public myBoidFlock f, pry, prd;
 	public flkVrs fv;
 	public int type, nearCount;
-	public double predRad, mass, totMaxRadSq,tot2MaxRad, minNghbDistSq, minPredDistSq, min2DistPrey,min2DistNghbr, colRadSq, spawnRadSq;
+	public float predRad, mass, totMaxRadSq,tot2MaxRad, minNghbDistSq, minPredDistSq, min2DistPrey,min2DistNghbr, colRadSq, spawnRadSq;
 	public boolean tor;							//is torroidal
 	public final int invSq 		= 0,			//1/sq dist
 	 		 		 sqDist 	= 1,
@@ -43,14 +43,14 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	}//findMyNeighbors
 	
 	//look for all neighbors until found neighborhood, expanding distance
-	private void srchForNeighbors(myBoid _src, List<myBoid> flock, double minDistSq ){
-		Double distSq;
+	private void srchForNeighbors(myBoid _src, List<myBoid> flock, float minDistSq ){
+		Float distSq;
 		//int numAdded = 0;
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
 			//if((chk.ID == _src.ID) || (chk.neighbors.containsKey(_src.ID))){continue;}
 			if(chk.ID == _src.ID){continue;}
-			distSq = myPoint._SqrDist(_src.coords, chk.coords);
+			distSq = myPointf._SqrDist(_src.coords, chk.coords);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
 			//distSq = chkPutDistInMap(_src.neighbors, chk.neighbors, distSq, _src, chk);
@@ -70,14 +70,14 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	
 	
 	//look for all neighbors until found neighborhood, expanding distance - keyed by squared distance
-	private void srchForNeighborsTor(myBoid _src, List<myBoid> flock, double min2Dist, double minDistSq ){
-		Double distSq;
-		myPoint tarLoc, srcLoc;
+	private void srchForNeighborsTor(myBoid _src, List<myBoid> flock, float min2Dist, float minDistSq ){
+		Float distSq;
+		myPointf tarLoc, srcLoc;
 		for(myBoid chk : flock){
 		//for(int c = 0; c < flock.size(); ++c){
 			//if((chk.ID == _src.ID) || (chk.neighbors.containsKey(_src.ID))){continue;}
 			if(chk.ID == _src.ID){continue;}
-			tarLoc = new myPoint(chk.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
+			tarLoc = new myPointf(chk.coords); srcLoc = new myPointf(_src.coords);//resetting because may be changed in calcMinSqDist
 			distSq = calcMinDistSq(_src.coords, chk.coords, srcLoc, tarLoc, min2Dist);
 			if(distSq>minDistSq){continue;}
 			//what if same dist as another?
@@ -92,9 +92,9 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 
 	//non-torroidal boundaries
 	private void srchForPrey(myBoid _src, List<myBoid> preyflock){
-		Double distSq;
+		Float distSq;
 		for(myBoid prey : preyflock){
-			distSq = myPoint._SqrDist(_src.coords, prey.coords);
+			distSq = myPointf._SqrDist(_src.coords, prey.coords);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another?
 			//distSq = chkPutDistInMap(_src.preyFlk,chk.predFlk,distSq,_src, chk);
@@ -103,12 +103,12 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		}	
 	}
 	private void srchForPreyTor(myBoid _src, List<myBoid> preyflock){
-		Double distSq, min2dist = min2DistPrey;
-		myPoint preyLoc, srcLoc;
+		Float distSq, min2dist = min2DistPrey;
+		myPointf preyLoc, srcLoc;
 		for(myBoid prey : preyflock){
 		//for(int c = 0; c < flock.size(); ++c){
 			if(_src == null){return;}//_src boid might have been eaten
-			preyLoc = new myPoint(prey.coords); srcLoc = new myPoint(_src.coords);//resetting because may be changed in calcMinSqDist
+			preyLoc = new myPointf(prey.coords); srcLoc = new myPointf(_src.coords);//resetting because may be changed in calcMinSqDist
 			distSq = calcMinDistSq(_src.coords, prey.coords, srcLoc, preyLoc, min2dist);
 			if(distSq>minPredDistSq){continue;}
 			//what if same dist as another - need to check both src and predflk
@@ -118,7 +118,7 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 		}	
 	}	
 //	//need to check 2 flocks for pred - this will make sure any predators or prey at the same distance as other preds/prey will get moved a bit further away(instead of colliding)
-//	private Double chkPutDistInMapBoid(ConcurrentSkipListMap<Double, myBoid> smap,ConcurrentSkipListMap<Double, myBoid> dmap, Double distSq, myBoid _sboid, myBoid _dboid){
+//	private Float chkPutDistInMapBoid(ConcurrentSkipListMap<Float, myBoid> smap,ConcurrentSkipListMap<Float, myBoid> dmap, Float distSq, myBoid _sboid, myBoid _dboid){
 //		myBoid chks4d = smap.get(distSq),
 //				chkd4s = dmap.get(distSq);
 //		//int iter=0;
@@ -135,13 +135,13 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 //	}//chkDistInMap
 	
 	//check if src boid map or tar boid map contain passed dist already - if so, increase dist a bit to put in unoccupied location in map
-	private Double chkPutDistInMap(ConcurrentSkipListMap<Double, myPoint> smap,ConcurrentSkipListMap<Double, myPoint> dmap, Double distSq, myPoint _sLoc, myPoint _dLoc){
-		myPoint chks4d = smap.get(distSq),
+	private Float chkPutDistInMap(ConcurrentSkipListMap<Float, myPointf> smap,ConcurrentSkipListMap<Float, myPointf> dmap, Float distSq, myPointf _sLoc, myPointf _dLoc){
+		myPointf chks4d = smap.get(distSq),
 				chkd4s = dmap.get(distSq);
 		//int iter=0;
 		while((chks4d != null) || (chkd4s != null)){
 			//replace chk	if not null
-			distSq *= 1.0000001;//mod distance some tiny amount
+			distSq *= 1.0000001f;//mod distance some tiny amount
 			chks4d = smap.get(distSq);
 			chkd4s = dmap.get(distSq);
 			//System.out.println("chkPutDistInMap collision : " + distSq + " iter : " + iter++ );
@@ -152,8 +152,8 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	}//chkDistInMap
 	
 	//finds closest dimension - returns square of that distance
-	public double calcMinDist1D(double p1, double p2, double dim, double[] newP1, double[] newP2){
-		double 	d1 = (p1-p2),		d1s = d1*d1,
+	public float calcMinDist1D(float p1, float p2, float dim, float[] newP1, float[] newP2){
+		float 	d1 = (p1-p2),		d1s = d1*d1,
 				d2 = (p1-(p2-dim)),	d2s = d2*d2,
 				d3 = ((p1-dim)-p2),	d3s = d3*d3;
 		if(d1s <= d2s){
@@ -165,16 +165,16 @@ public class myInitPredPreyMaps implements Callable<Boolean> {
 	}//calcMinDist1D
 	
 	//returns the minimum sq length vector from p1 to p2 for torroidal mapping; puts "virtual location" of torroidal mapped distances in newPt1 and newPt2
-	public Double calcMinDistSq(myPoint pt1, myPoint pt2, myPoint newPt1, myPoint newPt2, double minSqDist){
-		Double dist = myPoint._SqrDist(pt1, pt2);
+	public Float calcMinDistSq(myPointf pt1, myPointf pt2, myPointf newPt1, myPointf newPt2, float minSqDist){
+		Float dist = myPointf._SqrDist(pt1, pt2);
 		if(dist <= minSqDist){return dist;}			//means points are already closer to each other in regular space so they don't need to be special referenced.
 		//we're here because two boids are further from each other than the passed distance - now we have to find the closest they could be to each other given torroidal wrapping
-		double[] newP1 = new double[]{0}, newP2 = new double[]{0};
-		double dx = calcMinDist1D(pt1.x, pt2.x, p.gridDimW ,newP1, newP2);
+		float[] newP1 = new float[]{0}, newP2 = new float[]{0};
+		float dx = calcMinDist1D(pt1.x, pt2.x, p.gridDimX ,newP1, newP2);
 		newPt1.x = newP1[0];newPt2.x = newP2[0];
-		double dy = calcMinDist1D(pt1.y, pt2.y, p.gridDimDp ,newP1, newP2);
+		float dy = calcMinDist1D(pt1.y, pt2.y, p.gridDimY ,newP1, newP2);
 		newPt1.y = newP1[0];newPt2.y = newP2[0];
-		double dz = calcMinDist1D(pt1.z, pt2.z, p.gridDimH ,newP1, newP2);
+		float dz = calcMinDist1D(pt1.z, pt2.z, p.gridDimZ ,newP1, newP2);
 		newPt1.z = newP1[0];newPt2.z = newP2[0];
 		return dx+dy+dz;
 	}	

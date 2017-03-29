@@ -11,8 +11,8 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 	protected flkVrs fv;
 	protected List<myBoid> bAra;								//boid being worked on
 	protected myBoidFlock f;
-	myVector dampFrc;
-	protected double velRadSq, predRadSq, neighRadSq, colRadSq;				
+	myVectorf dampFrc;
+	protected float velRadSq, predRadSq, neighRadSq, colRadSq;				
 	protected final int invSq 		= 0,			//1/sq dist
 	 		 		 sqDist 	= 1,
 			 		 sqNegDist 	= 2,			//increases by sq as dist from increases
@@ -26,21 +26,21 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 		predRadSq = fv.predRad[f.type] * fv.predRad[f.type];
 		neighRadSq = fv.nghbrRad[f.type]* fv.nghbrRad[f.type];
 		colRadSq = fv.colRad[f.type] * fv.colRad[f.type];
-		dampFrc = new myVector();
+		dampFrc = new myVectorf();
 	}	
-	protected abstract myVector frcToCenter(myBoid b); 
-	//protected abstract myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double frcThresh);
-	protected abstract myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myPoint> otherLoc, double frcThresh);
-	protected abstract myVector frcVelMatch(myBoid b);
+	protected abstract myVectorf frcToCenter(myBoid b); 
+	//protected abstract myVectorf frcAvoidCol(myBoid b, ConcurrentSkipListMap<Float,myBoid> others, ConcurrentSkipListMap<Integer,myPointf> otherLoc, float frcThresh);
+	protected abstract myVectorf frcAvoidCol(myBoid b, ConcurrentSkipListMap<Float,myPointf> otherLoc, float frcThresh);
+	protected abstract myVectorf frcVelMatch(myBoid b);
 //	//collect to center of local group
-//	private myVector frcToCenter(myBoid b){
-//		double wtSqSum = 0, wtDist;	
-//		myVector frcVec = new myVector();
-//		for(Double bd_k : b.neighbors.keySet()){	
+//	private myVectorf frcToCenter(myBoid b){
+//		float wtSqSum = 0, wtDist;	
+//		myVectorf frcVec = new myVectorf();
+//		for(Float bd_k : b.neighbors.keySet()){	
 //			//wtDist = bd_k;  //old
-//			wtDist = 1.0/bd_k;//(bd_k*bd_k);
-//			//frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords[0]), bd_k));
-//			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
+//			wtDist = 1.0f/bd_k;//(bd_k*bd_k);
+//			//frcVec._add(myVectorf._mult(myVectorf._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords[0]), bd_k));
+//			frcVec._add(myVectorf._mult(myVectorf._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
 //			wtSqSum += wtDist;	
 //		}
 //		frcVec._div(wtSqSum);				
@@ -48,52 +48,52 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 //	}//frcToCenter
 //
 //	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
-//	//private myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double distThresh, double frcThresh){
-//	private myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myBoid> others, ConcurrentSkipListMap<Integer,myPoint> otherLoc, double frcThresh){
-//	//private myVector frcAvoidCol(ConcurrentSkipListMap<Double,myBoid> others, double distThresh, double frcThresh){
-//		myVector frcVec = new myVector(), tmpVec;
-//		double subRes, wtSqSum = 0;
-//		for(Double bd_k : others.keySet()){	//already limited to those closer than colRadSq
+//	//private myVectorf frcAvoidCol(myBoid b, ConcurrentSkipListMap<Float,myBoid> others, ConcurrentSkipListMap<Integer,myPointf> otherLoc, float distThresh, float frcThresh){
+//	private myVectorf frcAvoidCol(myBoid b, ConcurrentSkipListMap<Float,myBoid> others, ConcurrentSkipListMap<Integer,myPointf> otherLoc, float frcThresh){
+//	//private myVectorf frcAvoidCol(ConcurrentSkipListMap<Float,myBoid> others, float distThresh, float frcThresh){
+//		myVectorf frcVec = new myVectorf(), tmpVec;
+//		float subRes, wtSqSum = 0;
+//		for(Float bd_k : others.keySet()){	//already limited to those closer than colRadSq
 //			//if((bd_k>distThresh)||(null==b.neighbors.get(bd_k))){continue;}
 //			//subRes = (frcThresh - bd_k); 	//old
-//			tmpVec = myVector._sub(b.coords,otherLoc.get(others.get(bd_k).ID));
-//			subRes = 1.0/(bd_k * tmpVec.magn);
+//			tmpVec = myVectorf._sub(b.coords,otherLoc.get(others.get(bd_k).ID));
+//			subRes = 1.0f/(bd_k * tmpVec.magn);
 //			wtSqSum += subRes;
-//			//frcVec._add(myVector._mult(myVector._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
-//			frcVec._add(myVector._mult(tmpVec, subRes ));
+//			//frcVec._add(myVectorf._mult(myVectorf._sub(b.coords[0],otherLoc.get(others.get(bd_k).ID)), (subRes * subRes) + p.epsValCalc));
+//			frcVec._add(myVectorf._mult(tmpVec, subRes ));
 //		}
 //		frcVec._div(wtSqSum);	
 //		return frcVec;
 //	}//frcAvoidCol
 //	
-//	private myVector frcVelMatch(myBoid b){
-//		double dsq, wtSqSum = 0;
-//		myVector frcVec = new myVector();		
-//		for(Double bd_k : b.neighbors.keySet()){	
+//	private myVectorf frcVelMatch(myBoid b){
+//		float dsq, wtSqSum = 0;
+//		myVectorf frcVec = new myVectorf();		
+//		for(Float bd_k : b.neighbors.keySet()){	
 //			//if((bd_k>velRadSq)||(null==b.neighbors.get(bd_k))){continue;}
 //			if(bd_k>velRadSq){continue;}
-//			dsq = 1.0/bd_k;
+//			dsq = 1.0f/bd_k;
 //			//dsq=(velRadSq-bd_k);
 //			wtSqSum += dsq;
-//			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0])._normalize(), dsq));
+//			frcVec._add(myVectorf._mult(myVectorf._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0])._normalize(), dsq));
 //		}
 //		frcVec._div(wtSqSum == 0 ? 1 : wtSqSum);
 //		return frcVec;
 //	}
 	
-	private myVector frcWander(myBoid b){		return new myVector(ThreadLocalRandom.current().nextDouble(-b.mass,b.mass),ThreadLocalRandom.current().nextDouble(-b.mass,b.mass),ThreadLocalRandom.current().nextDouble(-b.mass,b.mass));}			//boid independent
+	private myVectorf frcWander(myBoid b){		return new myVectorf((float)ThreadLocalRandom.current().nextDouble(-b.mass,b.mass),(float)ThreadLocalRandom.current().nextDouble(-b.mass,b.mass),(float)ThreadLocalRandom.current().nextDouble(-b.mass,b.mass));}			//boid independent
 
 	//pass arrays since 2d arrays are arrays of references in java
-	private myVector setFrcVal(myVector frc, double[] multV, double[] maxV, int idx){
+	private myVectorf setFrcVal(myVectorf frc, float[] multV, float[] maxV, int idx){
 		frc._mult(multV[idx]);
 		if(frc.magn > maxV[idx]){	frc._mult(maxV[idx]/frc.magn);}
 		return frc;		
 	}
 
 	//returns a vector denoting the environmental velocity like wind or fluid
-	protected myVector getVelAtLocation(myVector _loc){
+	protected myVectorf getVelAtLocation(myVectorf _loc){
 		//stam fluid lookup could happen here
-		return new myVector();
+		return new myVectorf();
 	}
 	//all inheriting classes use the same run
 	public void run(){
@@ -123,10 +123,10 @@ public abstract class myFwdStencil implements Callable<Boolean> {
 //					}
 										
 					if (b.preyFlkLoc.size() !=0){//if prey exists
-						myPoint tar = b.preyFlkLoc.firstEntry().getValue(); 
+						myPointf tar = b.preyFlkLoc.firstEntry().getValue(); 
 						//add force at single boid target
-						double mult = (fv.eatFreq[b.type]/(b.starveCntr + 1.0));
-						myVector chase = setFrcVal(myVector._mult(myVector._sub(tar, b.coords),  mult),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcChsPrey); 
+						float mult = (fv.eatFreq[b.type]/(b.starveCntr + 1.0f));
+						myVectorf chase = setFrcVal(myVectorf._mult(myVectorf._sub(tar, b.coords),  mult),fv.wts[b.type], fv.maxFrcs[b.type],fv.wFrcChsPrey); 
 //						if(b.ID % 100 == 0){
 //							System.out.println("Flock : " + f.name+" ID : " + b.ID + " Chase force : " + chase.toString() + " mult : " + mult + " starve : " + b.starveCntr);
 //							
@@ -186,13 +186,13 @@ class myOrigForceStencil extends myFwdStencil{
 	
 	//collect to center of local group
 	@Override
-	protected myVector frcToCenter(myBoid b){
-		double wtSqSum = 0, wtDist;	
-		myVector frcVec = new myVector();
-		for(Double bd_k : b.neighLoc.keySet()){	
-			wtDist = 1.0/bd_k;//(bd_k*bd_k);
-			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(bd_k), b.coords), wtDist));
-			//frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
+	protected myVectorf frcToCenter(myBoid b){
+		float wtSqSum = 0, wtDist;	
+		myVectorf frcVec = new myVectorf();
+		for(Float bd_k : b.neighLoc.keySet()){	
+			wtDist = 1.0f/bd_k;//(bd_k*bd_k);
+			frcVec._add(myVectorf._mult(myVectorf._sub(b.neighLoc.get(bd_k), b.coords), wtDist));
+			//frcVec._add(myVectorf._mult(myVectorf._sub(b.neighLoc.get(b.neighbors.get(bd_k).ID), b.coords), wtDist));
 			wtSqSum += wtDist;	
 		}
 		frcVec._div(wtSqSum);				
@@ -201,28 +201,28 @@ class myOrigForceStencil extends myFwdStencil{
 
 	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
 	@Override
-	protected myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myPoint> otherLoc, double frcThresh){
-		myVector frcVec = new myVector(), tmpVec;
-		double subRes, wtSqSum = 0;
-		for(Double bd_k : otherLoc.keySet()){	//already limited to those closer than colRadSq
-			tmpVec = myVector._sub(b.coords,otherLoc.get(bd_k));
-			subRes = 1.0/(bd_k * tmpVec.magn);
+	protected myVectorf frcAvoidCol(myBoid b, ConcurrentSkipListMap<Float,myPointf> otherLoc, float frcThresh){
+		myVectorf frcVec = new myVectorf(), tmpVec;
+		float subRes, wtSqSum = 0;
+		for(Float bd_k : otherLoc.keySet()){	//already limited to those closer than colRadSq
+			tmpVec = myVectorf._sub(b.coords,otherLoc.get(bd_k));
+			subRes = 1.0f/(bd_k * tmpVec.magn);
 			wtSqSum += subRes;
-			frcVec._add(myVector._mult(tmpVec, subRes ));
+			frcVec._add(myVectorf._mult(tmpVec, subRes ));
 		}
 		frcVec._div(wtSqSum);	
 		return frcVec;
 	}//frcAvoidCol
 	
 	@Override
-	protected myVector frcVelMatch(myBoid b){
-		double dsq, wtSqSum = 0;
-		myVector frcVec = new myVector();		
-		for(Double bd_k : b.neighbors.keySet()){	
+	protected myVectorf frcVelMatch(myBoid b){
+		float dsq, wtSqSum = 0;
+		myVectorf frcVec = new myVectorf();		
+		for(Float bd_k : b.neighbors.keySet()){	
 			if(bd_k>velRadSq){continue;}
-			dsq = 1.0/bd_k;
+			dsq = 1.0f/bd_k;
 			wtSqSum += dsq;
-			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0]), dsq));
+			frcVec._add(myVectorf._mult(myVectorf._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0]), dsq));
 		}
 		frcVec._div(wtSqSum == 0 ? 1 : wtSqSum);
 		return frcVec;
@@ -238,12 +238,12 @@ class myLinForceStencil extends myFwdStencil{
 	
 	//collect to center of local group
 	@Override
-	protected myVector frcToCenter(myBoid b){
-		double wtSqSum = 0, wtDist;	
-		myVector frcVec = new myVector();
-		for(Double bd_k : b.neighLoc.keySet()){	
+	protected myVectorf frcToCenter(myBoid b){
+		float wtSqSum = 0, wtDist;	
+		myVectorf frcVec = new myVectorf();
+		for(Float bd_k : b.neighLoc.keySet()){	
 			wtDist = bd_k;
-			frcVec._add(myVector._mult(myVector._sub(b.neighLoc.get(bd_k), b.coords), wtDist));
+			frcVec._add(myVectorf._mult(myVectorf._sub(b.neighLoc.get(bd_k), b.coords), wtDist));
 			wtSqSum += wtDist;	
 		}
 		frcVec._div(wtSqSum);				
@@ -252,25 +252,25 @@ class myLinForceStencil extends myFwdStencil{
 
 	//avoid collision, avoid predators within radius frcThresh - scale avoidance force by distThresh
 	@Override
-	protected myVector frcAvoidCol(myBoid b, ConcurrentSkipListMap<Double,myPoint> otherLoc, double frcThresh){
-		myVector frcVec = new myVector(), tmpVec;
-		double subRes;
-		for(Double bd_k : otherLoc.keySet()){	//already limited to those closer than colRadSq
-			tmpVec = myVector._sub(b.coords,otherLoc.get(bd_k));
+	protected myVectorf frcAvoidCol(myBoid b, ConcurrentSkipListMap<Float,myPointf> otherLoc, float frcThresh){
+		myVectorf frcVec = new myVectorf(), tmpVec;
+		float subRes;
+		for(Float bd_k : otherLoc.keySet()){	//already limited to those closer than colRadSq
+			tmpVec = myVectorf._sub(b.coords,otherLoc.get(bd_k));
 			subRes = (frcThresh - bd_k); 	//old
-			frcVec._add(myVector._mult(tmpVec, subRes ));
+			frcVec._add(myVectorf._mult(tmpVec, subRes ));
 		}
 		return frcVec;
 	}//frcAvoidCol
 	
 	@Override
-	protected myVector frcVelMatch(myBoid b){
-		double dsq;
-		myVector frcVec = new myVector();		
-		for(Double bd_k : b.neighbors.keySet()){	
+	protected myVectorf frcVelMatch(myBoid b){
+		float dsq;
+		myVectorf frcVec = new myVectorf();		
+		for(Float bd_k : b.neighbors.keySet()){	
 			if(bd_k>velRadSq){continue;}
 			dsq=(velRadSq-bd_k);
-			frcVec._add(myVector._mult(myVector._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0]), dsq));
+			frcVec._add(myVectorf._mult(myVectorf._sub(b.neighbors.get(bd_k).velocity[0], b.velocity[0]), dsq));
 		}
 		return frcVec;
 	}

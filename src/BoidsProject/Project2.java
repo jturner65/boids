@@ -34,12 +34,14 @@ public class Project2 extends PApplet{
 	public String prjNmLong = "Project2", prjNmShrt = "Prj2";
 	
 	//epsilon value for calculations
-	public final double epsValCalc = .00000001f;
+	public final float epsValCalc = .00000001f;
+	
+	public final float fsqrt2 = (float)(Math.sqrt(2.0));
 	//timestep for forward simulation
-	public double delT;
-	private final double baseDelT = .1f;
+	public float delT;
+	private final float baseDelT = .1f;
 	//how much force is exerted at click location -decays with distance sqrd
-	public final double msClickForce = 100000000;
+	public final float msClickForce = 100000000;
 	public final int maxBoats = 15000;
 	
 	// structure holding boids
@@ -106,34 +108,34 @@ public class Project2 extends PApplet{
 		textureMode(NORMAL);		               			
 		viewDimW = width;
 		viewDimH = height;
-		canvas3D = new myPoint[4];		//3 points to define canvas
-		canvas3D[0]=new myPoint();canvas3D[1]=new myPoint();canvas3D[2]=new myPoint();canvas3D[3]=new myPoint();
+		canvas3D = new myPointf[4];		//3 points to define canvas
+		canvas3D[0]=new myPointf();canvas3D[1]=new myPointf();canvas3D[2]=new myPointf();canvas3D[3]=new myPointf();
 		delT = baseDelT*cycleModDraw;
 		menuWidth = width * menuWidthMult;						//width of menu region		
 		fv = new flkVrs(this, MaxNumFlocks);					//variable to hold all flocking-related variables
-		drawEyeLoc = new myPoint(-1, -1, -1000);
-		eyeInWorld = new myPoint();		
+		drawEyeLoc = new myPointf(-1, -1, -1000);
+		eyeInWorld = new myPointf();		
 		simCycles = 0;
-		eyeToMse = new myVector();		eyeToCtr = new myVector();	drawSNorm = new myVector();	canvasNorm = new myVector(); 						//normal of eye-to-mouse toward scene, current drawn object's normal to canvas
+		eyeToMse = new myVectorf();		eyeToCtr = new myVectorf();	drawSNorm = new myVectorf();	canvasNorm = new myVectorf(); 						//normal of eye-to-mouse toward scene, current drawn object's normal to canvas
 		initProgram();
 		fv_yOff = fv.getData(0).length * fv_ySz;			//set-once values related to menu zone on left of screen
-		yRadSt = new double[]{flval_ySt+fv_2Ysz,fv_yOff+flval_ySt+fv_2Ysz, fv_yOff+fv_yOff+flval_ySt+fv_2Ysz};				//enterable modifiable y values start here - radii values for flock, avoid and velMatch
-		yWtSt   = new double[]{yRadSt[0] + fv_2Ysz,yRadSt[1] + fv_2Ysz,yRadSt[2] + fv_2Ysz};				//weights start here
-		ySpwnSt = new double[]{yWtSt[0] + fv_2Ysz,yWtSt[1] + fv_2Ysz,yWtSt[2] + fv_2Ysz};				//spawn vals start here
-		yHuntSt = new double[]{ySpwnSt[0] + fv_ySz,ySpwnSt[1] + fv_ySz,ySpwnSt[2] + fv_ySz};				//hunt vals start here	
+		yRadSt = new float[]{flval_ySt+fv_2Ysz,fv_yOff+flval_ySt+fv_2Ysz, fv_yOff+fv_yOff+flval_ySt+fv_2Ysz};				//enterable modifiable y values start here - radii values for flock, avoid and velMatch
+		yWtSt   = new float[]{yRadSt[0] + fv_2Ysz,yRadSt[1] + fv_2Ysz,yRadSt[2] + fv_2Ysz};				//weights start here
+		ySpwnSt = new float[]{yWtSt[0] + fv_2Ysz,yWtSt[1] + fv_2Ysz,yWtSt[2] + fv_2Ysz};				//spawn vals start here
+		yHuntSt = new float[]{ySpwnSt[0] + fv_ySz,ySpwnSt[1] + fv_ySz,ySpwnSt[2] + fv_ySz};				//hunt vals start here	
 	}// initOnce
 	
 	public void initProgram() {
-		animCntr = ThreadLocalRandom.current().nextDouble(.000001f, maxAnimCntr);
+		animCntr = (ThreadLocalRandom.current().nextFloat() * (maxAnimCntr-.000001f) + .000001f);//ThreadLocalRandom.current().nextFloat(.000001f, maxAnimCntr);
 		animModMult = 1;
 		drawCount = 0;
 		debugInfoString = "";
 		reInitInfoStr();
 		initCamView();
-//		drawEyeLoc = new myPoint(-1, -1, -1000);
-//		eyeInWorld = new myPoint();		
+//		drawEyeLoc = new myPointf(-1, -1, -1000);
+//		eyeInWorld = new myPointf();		
 //		simCycles = 0;
-//		eyeToMse = new myVector();		eyeToCtr = new myVector();	drawSNorm = new myVector();	canvasNorm = new myVector(); 						//normal of eye-to-mouse toward scene, current drawn object's normal to canvas
+//		eyeToMse = new myVectorf();		eyeToCtr = new myVectorf();	drawSNorm = new myVectorf();	canvasNorm = new myVectorf(); 						//normal of eye-to-mouse toward scene, current drawn object's normal to canvas
 		animPath = sketchPath("") + "\\"+prjNmLong+"_" + ThreadLocalRandom.current().nextInt(1000);
 		animFileName = "\\" + prjNmLong;
 		numFlocks = (flags[singleFlock]?1:3);
@@ -181,13 +183,13 @@ public class Project2 extends PApplet{
 				}
 				if(flags[clearPath]){														//if refresh background
 					background(234,245,255);
-					drawAxes(100,3, new myPoint(-viewDimW/2.0f+40,0.0f,0.0f), 200, false); //for visualisation purposes and to show movement and location in otherwise empty scene
+					drawAxes(100,3, new myPointf(-viewDimW/2.0f+40,0.0f,0.0f), 200, false); //for visualisation purposes and to show movement and location in otherwise empty scene
 		  			buildCanvas();															//build drawing canvas based upon eye-to-scene vector
 		  		}
 	  			drawBoxBnds();
 	  			//if(flags[drawBoids]){
   				pushMatrix();pushStyle();
-  				translate(-gridDimW/2.0f,-gridDimDp/2.0f,-gridDimH/2.0f);
+  				translate(-gridDimX/2.0f,-gridDimY/2.0f,-gridDimZ/2.0f);
   		  		strokeWeight(.5f);
   				//for(int i =0; i<numFlocks; ++i){for(int c = 0; c < flocks[i].boidFlock.length; ++c){flocks[i].boidFlock[c].drawMe();	}}
   				for(int i =0; i<numFlocks; ++i){flocks[i].drawBoids();}
@@ -202,24 +204,24 @@ public class Project2 extends PApplet{
 		
 	}
 	//find mouse force exerted upon a particular location
-	public myVector mouseForceAtLoc(myPoint _loc){
-		myPoint mouseFrcLoc = new myPoint(dfCtr.x+gridDimW/2.0f,dfCtr.y+gridDimDp/2.0f,dfCtr.z+gridDimH/2.0f);// new myVector(lstClkX,0,lstClkY);//translate click location to where the space where the boids are	
-		double dist =  myPoint._dist(_loc, mouseFrcLoc);
+	public myVectorf mouseForceAtLoc(myPointf _loc){
+		myPointf mouseFrcLoc = new myPointf(dfCtr.x+gridDimX/2.0f,dfCtr.y+gridDimY/2.0f,dfCtr.z+gridDimZ/2.0f);// new myVectorf(lstClkX,0,lstClkY);//translate click location to where the space where the boids are	
+		float dist =  myPointf._dist(_loc, mouseFrcLoc);
 		if(dist==0){dist=.01f;}
-		double mag = (flags[attractMode]? 1 : -1) * msClickForce / (dist*dist);
+		float mag = (flags[attractMode]? 1 : -1) * msClickForce / (dist*dist);
 		return forceAttract(mouseFrcLoc, _loc, mag);
 	}//mouseForceAtLoc
 	
 	//force of magnitude mag from b to a 
-	public myVector forceAttract(myPoint a, myPoint b, double mag){
-		myVector resFrc = (myVector._sub(a, b));
+	public myVectorf forceAttract(myPointf a, myPointf b, float mag){
+		myVectorf resFrc = (myVectorf._sub(a, b));
 		resFrc._normalize();
 		resFrc._mult(mag);
 		return resFrc;	
 	}//forceAttract	
 
 	//animation speed control for any animated constructs being drawn here
-	public double animMod(){	return animModMult*(baseAnimSpd);	}
+	public float animMod(){	return animModMult*(baseAnimSpd);	}
 	//per-draw animation incrementer
 	public void animIncr(){
 		//use animCntr to control animation
@@ -294,7 +296,7 @@ public class Project2 extends PApplet{
 		if((flags[shiftKeyPressed])&&(key==CODED)){ if(keyCode == KeyEvent.VK_SHIFT){clearFlags(new int []{shiftKeyPressed, modView});}}
 	}
 	//find modifiable values within box bounded by min and max x and y - all values should be same offset from minX minY
-	public void modFlock(int fIdx, double clkX, double clkY, double modX, double modY){
+	public void modFlock(int fIdx, float clkX, float clkY, float modX, float modY){
 		if((selFlk==-1)||( selVal == -1)){
 			//System.out.println(" clkX : " + clkX+" clkY : "+clkY);
 			//find where click is and set value idx accordingly
@@ -313,7 +315,7 @@ public class Project2 extends PApplet{
 		fv.modFlkVal(selFlk, selVal, modX+modY);
 	}
 	//2d range checking of point
-	public boolean ptInRange(double x, double y, double minX, double minY, double maxX, double maxY){return ((x > minX)&&(x < maxX)&&(y > minY)&&(y < maxY));}	
+	public boolean ptInRange(float x, float y, float minX, float minY, float maxX, float maxY){return ((x > minX)&&(x < maxX)&&(y > minY)&&(y < maxY));}	
 	/**
 	 * handle mouse presses - print out to console value of particular cell
 	 */
@@ -343,7 +345,7 @@ public class Project2 extends PApplet{
 			if(flags[shiftKeyPressed]){
 				flags[modView]=true;
 				if(mouseButton == LEFT){			rx-=PI*(mouseY-pmouseY)/height; ry+=PI*(mouseX-pmouseX)/width;} 
-				else if (mouseButton == RIGHT) {	dz-=(double)(mouseY-pmouseY);}
+				else if (mouseButton == RIGHT) {	dz-=(float)(mouseY-pmouseY);}
 			}
 		}
 	}//mouseDragged()
@@ -363,9 +365,9 @@ public class Project2 extends PApplet{
 	public final int grid2D_X=800, grid2D_Y=800;	
 	//public final int gridDimX = 500, gridDimY = 500, gridDimZ = 500;				//dimensions of 3d region
 
-//	public myVector[] focusVals = new myVector[]{						//set these values to be different targets of focus
-//			new myVector(-grid2D_X/2,-grid2D_Y/1.75f,0),
-//			new myVector(0,0,gridDimZ/3.0f)
+//	public myVectorf[] focusVals = new myVectorf[]{						//set these values to be different targets of focus
+//			new myVectorf(-grid2D_X/2,-grid2D_Y/1.75f,0),
+//			new myVectorf(0,0,gridDimZ/3.0f)
 //	};
 	
 	//static variables - put obj constructor counters here
@@ -469,7 +471,7 @@ public class Project2 extends PApplet{
 			debugMode, showVelocity, showFlkMbrs, drawBoids, saveAnim, singleStep, runSim, 
 			attractMode, flkCenter, flkVelMatch, flkAvoidCol, flkWander , flkAvoidPred, flkHunt, flkHunger, flkSpawn, clearPath, singleFlock, useOrigDistFuncs //, useGLSL
 			);			
-	public double xOff = 20 , yOff = 20,// * (txtSz/12.0),			//offset values to render boolean menu on side of screen
+	public float xOff = 20 , yOff = 20,// * (txtSz/12.0),			//offset values to render boolean menu on side of screen
 		  flval_xSt = 17, flval_ySt = (numFlags*yOff) + 125, 	//start of flock data area
 		  fv_yOff, 							//dist between equivalent values in sequential flocks = wt_ySz * #lines in fv.getData()
 		  fv_ySz = 15,						//height of line in flock data
@@ -485,29 +487,29 @@ public class Project2 extends PApplet{
 		xSpwnEnd = xSpwnSt + 3*xWidL,
 		xHuntEnd = xHuntSt + 3*xWidL;										//hunt vals start here
 
-	double[] xValSize, yRadSt,yWtSt,ySpwnSt,yHuntSt;				//y values for UI-modifiable flock values
-	double bdgSizeX = 20, bdgSizeY = 15;
-	public myPoint[] mnBdgBox = new myPoint[]{new myPoint(0,0,0),new myPoint(0,bdgSizeY,0),new myPoint(bdgSizeX,bdgSizeY,0),new myPoint(bdgSizeX,0,0)};
-	public myPoint[] mnUVBox = new myPoint[]{new myPoint(0,0,0),new myPoint(1,0,0),new myPoint(1,1,0),new myPoint(0,1,0)};
+	float[] xValSize, yRadSt,yWtSt,ySpwnSt,yHuntSt;				//y values for UI-modifiable flock values
+	float bdgSizeX = 20, bdgSizeY = 15;
+	public myPointf[] mnBdgBox = new myPointf[]{new myPointf(0,0,0),new myPointf(0,bdgSizeY,0),new myPointf(bdgSizeX,bdgSizeY,0),new myPointf(bdgSizeX,0,0)};
+	public myPointf[] mnUVBox = new myPointf[]{new myPointf(0,0,0),new myPointf(1,0,0),new myPointf(1,1,0),new myPointf(0,1,0)};
 	
 	public int drawCount,							// counter for draw cycles
 				simCycles;
 	public final int cycleModDraw = 1;						// how many cycles before a draw
 	
-	public myPoint mseCurLoc2D;
+	public myPointf mseCurLoc2D;
 	//timestep
-	//public double deltaT;
-	public final double maxDelT = 7;			//max value that delta t can be set to
+	//public float deltaT;
+	public final float maxDelT = 7;			//max value that delta t can be set to
 	//how many frames to wait to actually refresh/draw
 	//public int cycleModDraw = 1;
 	public final int maxCycModDraw = 20;	//max val for cyc mod draw
 	
 	public myGUIObj[] guiObjs;	
 	public final int numGuiObjs = 3;		//# of gui objects for ui
-	public final double[][] guiMinMaxModVals = new double [][]{//min max mod values
-			{0, maxDelT, .05},													//delta t
-			{1, maxCycModDraw, .1},	
-			{0, 1, .001}															//Iso level of mc dislay			
+	public final float[][] guiMinMaxModVals = new float [][]{//min max mod values
+			{0, maxDelT, .05f},													//delta t
+			{1, maxCycModDraw, .1f},	
+			{0, 1, .001f}															//Iso level of mc dislay			
 	};
 
 	public final String[] guiObjNames = new String[]{"Delta T","Draw Cycle Length", "MC Iso Level"};	
@@ -523,16 +525,16 @@ public class Project2 extends PApplet{
 	public String animPath, animFileName;
 	public int animCounter;
 	//UI vars
-	public final double menuWidthMult = .15f;
-	public double menuWidth;
+	public final float menuWidthMult = .15f;
+	public float menuWidth;
 	public int selFlk, selVal;
-	public final int gridDimW = 1500, gridDimDp = 1500, gridDimH = 1500;				//dimensions of boid region
+	public final int gridDimX = 1500, gridDimY = 1500, gridDimZ = 1500;				//dimensions of boid region
 	//public final int viewDim = 900;
 	public int viewDimW, viewDimH;
 	
 	private boolean cyclModCmp;								//comparison every draw of cycleModDraw	
 	////
-	public myVector eyeToMse, 
+	public myVectorf eyeToMse, 
 				eyeToCtr,									//vector from eye to center of cube, to be used to determine which panels of bounding box to show or hide
 				canvasNorm, 								//normal of eye-to-mouse toward scene, current drawn object's normal to canvas
 				drawSNorm;									//current normal of viewport/screen
@@ -542,20 +544,20 @@ public class Project2 extends PApplet{
 	public String debugInfoString;
 	
 	//animation control variables	
-	public double animCntr, animModMult;
-	public final double maxAnimCntr = PI*1000.0f, baseAnimSpd = 1.0f;
+	public float animCntr, animModMult;
+	public final float maxAnimCntr = PI*1000.0f, baseAnimSpd = 1.0f;
 	
-	private double dz=0, 											// distance to camera. Manipulated with wheel or when
+	private float dz=0, 											// distance to camera. Manipulated with wheel or when
 		  rx=-0.06f*TWO_PI, ry=-0.04f*TWO_PI;						// view angles manipulated when space pressed but not mouse	
-	public myPoint drawEyeLoc,													//rx,ry,dz coords where eye was when drawing - set when first drawing and return eye to this location whenever trying to draw again - rx,ry,dz
-	   scrCtrInWorld = new myPoint(),									//
-	   mseLoc = new myPoint(),
-	   eyeInWorld = new myPoint(),
-	   oldDfCtr  = new myPoint(),
-	   dfCtr = new myPoint();											//mouse location projected onto current drawing canvas
+	public myPointf drawEyeLoc,													//rx,ry,dz coords where eye was when drawing - set when first drawing and return eye to this location whenever trying to draw again - rx,ry,dz
+	   scrCtrInWorld = new myPointf(),									//
+	   mseLoc = new myPointf(),
+	   eyeInWorld = new myPointf(),
+	   oldDfCtr  = new myPointf(),
+	   dfCtr = new myPointf();											//mouse location projected onto current drawing canvas
 
-	public double canvasDim = 1500; 									//canvas dimension for "virtual" 3d		
-	public myPoint[] canvas3D;									//3d plane, normal to camera eye, to be used for drawing - need to be in "view space" not in "world space", so that if camera moves they don't change
+	public float canvasDim = 1500; 									//canvas dimension for "virtual" 3d		
+	public myPointf[] canvas3D;									//3d plane, normal to camera eye, to be used for drawing - need to be in "view space" not in "world space", so that if camera moves they don't change
 	
 	
 	
@@ -568,7 +570,7 @@ public class Project2 extends PApplet{
 		strokeWeight(3f);
 		noFill();
 		setColorValStroke(gui_TransGray);
-		box(gridDimW ,gridDimDp,gridDimH);
+		box(gridDimX ,gridDimY,gridDimZ);
 		popStyle();		
 	}
 	
@@ -582,49 +584,49 @@ public class Project2 extends PApplet{
 			translate((float)dfCtr.x, (float)dfCtr.y, (float)dfCtr.z);
 			//project mouse point on bounding box walls
 			drawProjOnBox(dfCtr, new int[] {gui_Red, gui_Red, gui_Green, gui_Green, gui_Blue, gui_Blue});
-			drawAxes(10000,1f, myPoint.ZEROPT, 100, true);//
+			drawAxes(10000,1f, myPointf.ZEROPT, 100, true);//
 			//draw intercept with box
 			stroke(0,0,0,255);
-			show(myPoint.ZEROPT,3);
+			show(myPointf.ZEROPT,3);
 			drawText(""+dfCtr,4, 4, 4,0);
 		popStyle();
 		popMatrix();		
 	}//drawMseEdge
 
 	//project passed point onto box surface based on location - to help visualize the location in 3d
-	public void drawProjOnBox(myPoint p, int[] clr){
+	public void drawProjOnBox(myPointf p, int[] clr){
 		if(clr.length < 6){clr =  new int[]{gui_Black,gui_Black,gui_Black,gui_Black,gui_Black,gui_Black};}
-		show(new myPoint((float)-p.x-gridDimW/2.0f,0, 0),15, clr[0]);		show(new myPoint((float)-p.x+gridDimW/2.0f,0, 0),15, clr[1]);
-		show(new myPoint(0,(float)-p.y-gridDimDp/2.0f, 0),15, clr[2]);		show(new myPoint(0,(float)-p.y+gridDimDp/2.0f, 0),15, clr[3]);
-		show(new myPoint(0,0, (float)-p.z-gridDimH/2.0f),15, clr[4]);		show(new myPoint(0,0, (float)-p.z+gridDimH/2.0f),15, clr[5]);
+		show(new myPointf((float)-p.x-gridDimX/2.0f,0, 0),15, clr[0]);		show(new myPointf((float)-p.x+gridDimX/2.0f,0, 0),15, clr[1]);
+		show(new myPointf(0,(float)-p.y-gridDimY/2.0f, 0),15, clr[2]);		show(new myPointf(0,(float)-p.y+gridDimY/2.0f, 0),15, clr[3]);
+		show(new myPointf(0,0, (float)-p.z-gridDimZ/2.0f),15, clr[4]);		show(new myPointf(0,0, (float)-p.z+gridDimZ/2.0f),15, clr[5]);
 	}//drawProjOnBox
-	public void drawProjOnBox(myPoint p){drawProjOnBox(p, new int[]{gui_Black,gui_Black,gui_Black,gui_Black,gui_Black,gui_Black});}	
+	public void drawProjOnBox(myPointf p){drawProjOnBox(p, new int[]{gui_Black,gui_Black,gui_Black,gui_Black,gui_Black,gui_Black});}	
 	
 	//find points to define plane normal to camera eye, at set distance from camera, to use drawing canvas 	
 	public void buildCanvas(){
 		mseLoc = MouseScr();		
 		scrCtrInWorld = pick(viewDimW/2, viewDimH/2);		
-		myVector A = new myVector(scrCtrInWorld, pick(viewDimW, -viewDimH)),	B = new myVector(scrCtrInWorld, pick(viewDimW, 0));	//ctr to upper right, ctr to lower right		
-		drawSNorm = U(myVector._cross(A,B));				 													//normal to canvas that is colinear with view normal to ctr of screen
-		eyeInWorld = myPoint._add(new myPoint(scrCtrInWorld), myPoint._dist(pick(0,0), scrCtrInWorld), drawSNorm);								//location of "eye" in world space
-		eyeToCtr = new myVector(eyeInWorld, new myPoint(0,0,0));
+		myVectorf A = new myVectorf(scrCtrInWorld, pick(viewDimW, -viewDimH)),	B = new myVectorf(scrCtrInWorld, pick(viewDimW, 0));	//ctr to upper right, ctr to lower right		
+		drawSNorm = U(myVectorf._cross(A,B));				 													//normal to canvas that is colinear with view normal to ctr of screen
+		eyeInWorld = myPointf._add(new myPointf(scrCtrInWorld), myPointf._dist(pick(0,0), scrCtrInWorld), drawSNorm);								//location of "eye" in world space
+		eyeToCtr = new myVectorf(eyeInWorld, new myPointf(0,0,0));
 		eyeToMse = U(eyeInWorld, mseLoc);		//unit vector in world coords of "eye" to mouse location
-		myVector planeTan = U(myVector._cross(drawSNorm, U(drawSNorm.x+10,drawSNorm.y+10,drawSNorm.z+10)));			//result of vector crossed with normal will be in plane described by normal
+		myVectorf planeTan = U(myVectorf._cross(drawSNorm, U(drawSNorm.x+10,drawSNorm.y+10,drawSNorm.z+10)));			//result of vector crossed with normal will be in plane described by normal
      	for(int i =0;i<canvas3D.length;++i){
-     		canvas3D[i] = new myPoint(myVector._mult(planeTan, canvasDim));
-     		planeTan = U(myVector._cross(drawSNorm, planeTan));												//this effectively rotates around center point by 90 degrees -builds a square
+     		canvas3D[i] = new myPointf(myVectorf._mult(planeTan, canvasDim));
+     		planeTan = U(myVectorf._cross(drawSNorm, planeTan));												//this effectively rotates around center point by 90 degrees -builds a square
      	}
-     	oldDfCtr = new myPoint(dfCtr);
+     	oldDfCtr = new myPointf(dfCtr);
      	dfCtr = getPlInterSect(mseLoc,eyeToMse);
      	drawMseEdge();
 	}//buildCanvas()
 	
 	//returns unit vector in world coords of "eye" to point location
-	public myVector getUnitEyeToPt(myPoint p){	return U(eyeInWorld, p);}
+	public myVectorf getUnitEyeToPt(myPointf p){	return U(eyeInWorld, p);}
 	
 	//find pt in drawing plane that corresponds with mouse location and camera eye normal
-	public myPoint getPlInterSect(myPoint p, myVector camEyeNorm){
-		myPoint dctr = new myPoint(0,0,0);	//actual click location on visible plane
+	public myPointf getPlInterSect(myPointf p, myVectorf camEyeNorm){
+		myPointf dctr = new myPointf(0,0,0);	//actual click location on visible plane
 		 // if ray from E along T intersects triangle (A,B,C), return true and set X to the intersection point
 		intersectPl(p, camEyeNorm, canvas3D[0],canvas3D[1],canvas3D[2],  dctr);//find point where mouse ray intersects canvas
 		return dctr;		
@@ -646,7 +648,7 @@ public class Project2 extends PApplet{
 	
 	public void setCamOrient(){rotateX((float)rx);rotateY((float)ry); rotateX((float)PI/(2.0f));		}//sets the rx, ry, pi/2 orientation of the camera eye	
 	public void unSetCamOrient(){rotateX((float)-PI/(2.0f)); rotateY((float)-ry);   rotateX((float)-rx); }//reverses the rx,ry,pi/2 orientation of the camera eye - paints on screen and is unaffected by camera movement
-	public void drawAxes(double len, double stW, myPoint ctr, int alpha, boolean centered){
+	public void drawAxes(float len, float stW, myPointf ctr, int alpha, boolean centered){
 		pushMatrix();pushStyle();
 			strokeWeight((float)stW);
 			stroke(255,0,0,alpha);
@@ -654,12 +656,12 @@ public class Project2 extends PApplet{
 			else {		line(ctr.x,ctr.y,ctr.z,ctr.x+len,ctr.y,ctr.z);stroke(0,255,0,alpha);line(ctr.x,ctr.y,ctr.z,ctr.x,ctr.y+len,ctr.z);stroke(0,0,255,alpha);line(ctr.x,ctr.y,ctr.z,ctr.x,ctr.y,ctr.z+len);}
 		popStyle();	popMatrix();	
 	}//	drawAxes
-	public void drawAxes(double len, double stW, myPoint ctr, myVector[] _axis, int alpha){
+	public void drawAxes(float len, float stW, myPointf ctr, myVectorf[] _axis, int alpha){
 		pushMatrix();pushStyle();
 			strokeWeight((float)stW);stroke(255,0,0,alpha);line(ctr.x,ctr.y,ctr.z,ctr.x+(_axis[0].x)*len,ctr.y+(_axis[0].y)*len,ctr.z+(_axis[0].z)*len);stroke(0,255,0,alpha);line(ctr.x,ctr.y,ctr.z,ctr.x+(_axis[1].x)*len,ctr.y+(_axis[1].y)*len,ctr.z+(_axis[1].z)*len);	stroke(0,0,255,alpha);	line(ctr.x,ctr.y,ctr.z,ctr.x+(_axis[2].x)*len,ctr.y+(_axis[2].y)*len,ctr.z+(_axis[2].z)*len);
 		popStyle();	popMatrix();	
 	}//	drawAxes
-	public void drawText(String str, double x, double y, double z, int clr){
+	public void drawText(String str, float x, float y, float z, int clr){
 		int[] c = getClr(clr);
 		pushMatrix();	pushStyle();
 			fill(c[0],c[1],c[2],c[3]);
@@ -684,7 +686,7 @@ public class Project2 extends PApplet{
 		if(flags[debugMode]){
 			pushMatrix();pushStyle();			
 			reInitInfoStr();
-			addInfoStr(0,"mse loc on screen : " + new myPoint(mouseX, mouseY,0) + " mse loc in world :"+mseLoc +"  Eye loc in world :"+ eyeInWorld); 
+			addInfoStr(0,"mse loc on screen : " + new myPointf(mouseX, mouseY,0) + " mse loc in world :"+mseLoc +"  Eye loc in world :"+ eyeInWorld); 
 			addInfoStr(1,"Num Flocks : "+numFlocks);
 			String[] res;
 			for(int i =0; i<numFlocks; ++i){res = flocks[i].getInfoString();for(int s=0;s<res.length;++s) {	addInfoStr(res[s]);}}
@@ -770,7 +772,7 @@ public class Project2 extends PApplet{
 		for(int j=1;j<fvData.length; ++j){text(fvData[j],0,-yOff*.5f);translate(0,yOff*.75f);}	
 	}
 
-	public void drawMenuBadge(myPoint[] ara, myPoint[] uvAra, int type) {
+	public void drawMenuBadge(myPointf[] ara, myPointf[] uvAra, int type) {
 		beginShape(); 
 			texture(flkSails[type]);
 			for(int i=0;i<ara.length;++i){	vTextured(ara[i], uvAra[i].y, uvAra[i].x);} 
@@ -785,7 +787,7 @@ public class Project2 extends PApplet{
 		setInfoStr(idx,str);	return idx;
 	}
 	public void setInfoStr(int idx, String str){DebugInfoAra.set(idx,str);	}
-	public void drawInfoStr(double sc){
+	public void drawInfoStr(float sc){
 		pushMatrix();		pushStyle();
 		fill(0,0,0,100);
 		translate((width * menuWidthMult),0);
@@ -795,24 +797,24 @@ public class Project2 extends PApplet{
 	}		
 	//vector and point functions to be compatible with earlier code from jarek's class or previous projects	
 	
-	//line bounded by verts - from a to b new myPoint(x,y,z); 
-	public class edge{ public myPoint a, b;
-		public edge (){a=new myPoint(0,0,0); b=new myPoint(0,0,0);}
-		public edge (myPoint _a, myPoint _b){a=new myPoint(_a); b=new myPoint(_b);}
-		public void set(double d, myVector dir, myPoint _p){	set( myPoint._add(_p,-d,new myVector(dir)), myPoint._add(_p,d,new myVector(dir)));} 
-		public void set(myPoint _a, myPoint _b){a=new myPoint(_a); b=new myPoint(_b);}
-		public myVector v(){return new myVector(b.x-a.x, b.y-a.y, b.z-a.z);}			//vector from a to b
-		public myVector dir(){return U(v());}
-		public double len(){return  myPoint._dist(a,b);}
-		public double distFromPt(myPoint P) {return myVector._det3(dir(),new myVector(a,P)); };
+	//line bounded by verts - from a to b new myPointf(x,y,z); 
+	public class edge{ public myPointf a, b;
+		public edge (){a=new myPointf(0,0,0); b=new myPointf(0,0,0);}
+		public edge (myPointf _a, myPointf _b){a=new myPointf(_a); b=new myPointf(_b);}
+		public void set(float d, myVectorf dir, myPointf _p){	set( myPointf._add(_p,-d,new myVectorf(dir)), myPointf._add(_p,d,new myVectorf(dir)));} 
+		public void set(myPointf _a, myPointf _b){a=new myPointf(_a); b=new myPointf(_b);}
+		public myVectorf v(){return new myVectorf(b.x-a.x, b.y-a.y, b.z-a.z);}			//vector from a to b
+		public myVectorf dir(){return U(v());}
+		public float len(){return  myPointf._dist(a,b);}
+		public float distFromPt(myPointf P) {return myVectorf._det3(dir(),new myVectorf(a,P)); };
 		public void drawMe(){line(a.x,a.y,a.z,b.x,b.y,b.z); }
 	    public String toString(){return "a:"+a+" to b:"+b+" len:"+len();}
 	}
-	public myPoint pick(int mX, int mY){
+	public myPointf pick(int mX, int mY){
 		PGL pgl = beginPGL();
 		FloatBuffer depthBuffer = ByteBuffer.allocateDirect(1 << 2).order(ByteOrder.nativeOrder()).asFloatBuffer();
 		int newMy = viewDimW - mY;
-		//pgl.readPixels(mX, gridDimDp - mY - 1, 1, 1, PGL.DEPTH_COMPONENT, PGL.FLOAT, depthBuffer);
+		//pgl.readPixels(mX, gridDimY - mY - 1, 1, 1, PGL.DEPTH_COMPONENT, PGL.FLOAT, depthBuffer);
 		pgl.readPixels(mX, newMy, 1, 1, PGL.DEPTH_COMPONENT, PGL.FLOAT, depthBuffer);
 		float depthValue = depthBuffer.get(0);
 		depthBuffer.clear();
@@ -825,7 +827,7 @@ public class Project2 extends PApplet{
 		PMatrix3D modelViewProjInv = proj; modelViewProjInv.apply( modelView ); modelViewProjInv.invert();
 	  
 		float[] viewport = {0, 0, viewDimW, viewDimH};
-		//double[] viewport = {0, 0, p3d.width, p3d.height};
+		//float[] viewport = {0, 0, p3d.width, p3d.height};
 		  
 		float[] normalized = new float[4];
 		normalized[0] = ((mX - viewport[0]) / viewport[2]) * 2.0f - 1.0f;
@@ -836,34 +838,34 @@ public class Project2 extends PApplet{
 		float[] unprojected = new float[4];
 	  
 		modelViewProjInv.mult( normalized, unprojected );
-		return new myPoint( unprojected[0]/unprojected[3], unprojected[1]/unprojected[3], unprojected[2]/unprojected[3] );
+		return new myPointf( unprojected[0]/unprojected[3], unprojected[1]/unprojected[3], unprojected[2]/unprojected[3] );
 	}		
 		
-	//public myPoint MouseScr() {return pick(min(mouseX, gridDimW), min(mouseY, gridDimDp));}                                          		// current mouse location
-	public myPoint MouseScr() {return pick(mouseX,mouseY);}                                          		// current mouse location
-	//public myPoint PmouseScr() {return pick(pmouseX, pmouseY);}
+	//public myPointf MouseScr() {return pick(min(mouseX, gridDimX), min(mouseY, gridDimY));}                                          		// current mouse location
+	public myPointf MouseScr() {return pick(mouseX,mouseY);}                                          		// current mouse location
+	//public myPointf PmouseScr() {return pick(pmouseX, pmouseY);}
 	 
-	public myPoint Mouse() {return new myPoint(mouseX, mouseY,0);}                                          			// current mouse location
-	//public myPoint Pmouse() {return new myPoint(pmouseX, pmouseY,0);}
-	public myVector MouseDrag() {return new myVector(mouseX-pmouseX,mouseY-pmouseY,0);};                     			// vector representing recent mouse displacement
-	//public myPoint ScreenCenter() {return P(width/2,height/2);}                                                        //  point in center of  canvas
+	public myPointf Mouse() {return new myPointf(mouseX, mouseY,0);}                                          			// current mouse location
+	//public myPointf Pmouse() {return new myPointf(pmouseX, pmouseY,0);}
+	public myVectorf MouseDrag() {return new myVectorf(mouseX-pmouseX,mouseY-pmouseY,0);};                     			// vector representing recent mouse displacement
+	//public myPointf ScreenCenter() {return P(width/2,height/2);}                                                        //  point in center of  canvas
 	
-	public myVector U(myVector v){myVector u = new myVector(v); return u._normalize(); }
-	public myVector U(myPoint a, myPoint b){myVector u = new myVector(a,b); return u._normalize(); }
-	public myVector U(double x, double y, double z) {myVector u = new myVector(x,y,z); return u._normalize();}
+	public myVectorf U(myVectorf v){myVectorf u = new myVectorf(v); return u._normalize(); }
+	public myVectorf U(myPointf a, myPointf b){myVectorf u = new myVectorf(a,b); return u._normalize(); }
+	public myVectorf U(float x, float y, float z) {myVectorf u = new myVectorf(x,y,z); return u._normalize();}
 	
-	public myVector normToPlane(myPoint A, myPoint B, myPoint C) {return myVector._cross(new myVector(A,B),new myVector(A,C)); };   // normal to triangle (A,B,C), not normalized (proportional to area)
+	public myVectorf normToPlane(myPointf A, myPointf B, myPointf C) {return myVectorf._cross(new myVectorf(A,B),new myVectorf(A,C)); };   // normal to triangle (A,B,C), not normalized (proportional to area)
 	
 	
-	public void transToPoint(myPoint P){		translate((float)P.x,(float)P.y,(float)P.z);}
+	public void transToPoint(myPointf P){		translate((float)P.x,(float)P.y,(float)P.z);}
 	
-	public void drawPlane(myPoint[] pts){		beginShape(); for(int i=0;i<pts.length;++i){gl_vertex(pts[i]);} endShape(CLOSE);}
-	public void drawPlane(myPoint[] pts, myVector n){ beginShape(); gl_normal(n);for(int i=0;i<pts.length;++i){gl_vertex(pts[i]);} endShape(CLOSE);}
-	public void drawPlane(myPoint c1, myPoint c2, myPoint c3, myPoint c4){		beginShape(); gl_vertex(c1);		gl_vertex(c2);		gl_vertex(c3);		gl_vertex(c4);	 endShape(CLOSE);	}
-	public void drawPlane(myPoint c1, myPoint c2, myPoint c3, myPoint c4, myVector n){	beginShape();gl_vertex(c1);		gl_vertex(c2);		gl_vertex(c3);		gl_vertex(c4);gl_normal(n);	 endShape(CLOSE);}
+	public void drawPlane(myPointf[] pts){		beginShape(); for(int i=0;i<pts.length;++i){gl_vertex(pts[i]);} endShape(CLOSE);}
+	public void drawPlane(myPointf[] pts, myVectorf n){ beginShape(); gl_normal(n);for(int i=0;i<pts.length;++i){gl_vertex(pts[i]);} endShape(CLOSE);}
+	public void drawPlane(myPointf c1, myPointf c2, myPointf c3, myPointf c4){		beginShape(); gl_vertex(c1);		gl_vertex(c2);		gl_vertex(c3);		gl_vertex(c4);	 endShape(CLOSE);	}
+	public void drawPlane(myPointf c1, myPointf c2, myPointf c3, myPointf c4, myVectorf n){	beginShape();gl_vertex(c1);		gl_vertex(c2);		gl_vertex(c3);		gl_vertex(c4);gl_normal(n);	 endShape(CLOSE);}
 
 ///////////
-//double to float translations
+//float to float translations
 //////////
 	void text(String s, double x, double y){text(s, (float)x, (float)y);}
 	void line(double x1, double y1, double z1,double x2, double y2, double z2){line((float)x1,(float)y1,(float)z1,(float)x2,(float)y2,(float)z2);}
@@ -878,13 +880,13 @@ public class Project2 extends PApplet{
 	void vertex(double x, double y, double z){vertex((float)x,(float)y,(float)z);}
 	void normal(double x, double y, double z){normal((float)x,(float)y,(float)z);}
 	
-	void gl_normal(myVector V) {normal((float)V.x,(float)V.y,(float)V.z);}                                          // changes normal for smooth shading
-	void gl_vertex(myPoint P) {vertex((float)P.x,(float)P.y,(float)P.z);}                                           // vertex for shading or drawing
-	void curveVertex(myPoint P) {curveVertex((float)P.x,(float)P.y,(float)P.z);}                                           // curveVertex for shading or drawing
-	//void vTextured(myPoint P, double u, double v) {vertex((float)P.x,(float)P.y,(float)P.z,(float)u,(float)v);}                          // vertex with texture coordinates
-	//void line(double x1, double y1, double z1, double x2, double y2, double z2){line((float)x1,(float)y1,(float)z1,(float)x2,(float)y2,(float)z2);}
-	void line(myPoint a, myPoint b){line((float)a.x,(float)a.y,(float)a.z,(float)b.x,(float)b.y,(float)b.z);}
-	void line(myPoint a, myPoint b, int stClr, int endClr){
+	void gl_normal(myVectorf V) {normal((float)V.x,(float)V.y,(float)V.z);}                                          // changes normal for smooth shading
+	void gl_vertex(myPointf P) {vertex((float)P.x,(float)P.y,(float)P.z);}                                           // vertex for shading or drawing
+	void curveVertex(myPointf P) {curveVertex((float)P.x,(float)P.y,(float)P.z);}                                           // curveVertex for shading or drawing
+	//void vTextured(myPointf P, float u, float v) {vertex((float)P.x,(float)P.y,(float)P.z,(float)u,(float)v);}                          // vertex with texture coordinates
+	//void line(float x1, float y1, float z1, float x2, float y2, float z2){line((float)x1,(float)y1,(float)z1,(float)x2,(float)y2,(float)z2);}
+	void line(myPointf a, myPointf b){line((float)a.x,(float)a.y,(float)a.z,(float)b.x,(float)b.y,(float)b.z);}
+	void line(myPointf a, myPointf b, int stClr, int endClr){
 		beginShape();
 		this.strokeWeight(1.0f);
 		this.setColorValStroke(stClr);
@@ -893,56 +895,57 @@ public class Project2 extends PApplet{
 		this.vertex((float)b.x,(float)b.y,(float)b.z);
 		endShape();
 	}
-	void show(myPoint[] ara) {beginShape(); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                  
-	void curve(myPoint[] ara) {if(ara.length == 0){return;}beginShape(); curveVertex(ara[0]);for(int i=0;i<ara.length;++i){curveVertex(ara[i]);} curveVertex(ara[ara.length-1]);endShape(CLOSE);}                      // volume of tet 
-	void showContour(myPoint[] ara) {beginContour(); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endContour();}                      // volume of tet 
-	void showPts(myPoint[] ara) {beginShape(POINTS); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                      
-	void showPts(myPoint[] ara, PImage txtr) {beginShape(POINTS); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                      
-	void circle(myPoint P, double r, myVector I, myVector J, int n) {myPoint[] pts = new myPoint[n];pts[0] =  myPoint._add(P,r,U(I));double a = (2*PI)/(1.0f*n);for(int i=1;i<n;++i){pts[i] = R(pts[i-1],a,J,I,P);}pushMatrix(); pushStyle();noFill();strokeWeight(2);stroke(0);show(pts);popStyle();popMatrix();} // render sphere of radius r and center P
+	void show(myPointf[] ara) {beginShape(); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                  
+	void curve(myPointf[] ara) {if(ara.length == 0){return;}beginShape(); curveVertex(ara[0]);for(int i=0;i<ara.length;++i){curveVertex(ara[i]);} curveVertex(ara[ara.length-1]);endShape(CLOSE);}                      // volume of tet 
+	void showContour(myPointf[] ara) {beginContour(); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endContour();}                      // volume of tet 
+	void showPts(myPointf[] ara) {beginShape(POINTS); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                      
+	void showPts(myPointf[] ara, PImage txtr) {beginShape(POINTS); for(int i=0;i<ara.length;++i){gl_vertex(ara[i]);} endShape(CLOSE);}                      
+	void circle(myPointf P, float r, myVectorf I, myVectorf J, int n) {myPointf[] pts = new myPointf[n];pts[0] =  myPointf._add(P,r,U(I));float a = (2*PI)/(1.0f*n);for(int i=1;i<n;++i){pts[i] = R(pts[i-1],a,J,I,P);}pushMatrix(); pushStyle();noFill();strokeWeight(2);stroke(0);show(pts);popStyle();popMatrix();} // render sphere of radius r and center P
 
+	myPointf R(myPointf P, float a, myVectorf I, myVectorf J, myPointf G) {float x=myVectorf._dot(new myVectorf(G,P),I), y=myVectorf._dot(new myVectorf(G,P),J); float c=cos(a), s=sin(a); return myPointf._add(P,x*c-x-y*s,I,x*s+y*c-y,J); } 
 	myPoint R(myPoint P, double a, myVector I, myVector J, myPoint G) {double x=myVector._dot(new myVector(G,P),I), y=myVector._dot(new myVector(G,P),J); double c=Math.cos(a), s=Math.sin(a); return myPoint._add(P,x*c-x-y*s,I,x*s+y*c-y,J); } 
 	
-	public void vTextured(myPoint P, double u, double v) {vertex((float)P.x,(float)P.y,(float)P.z,(float)u,(float)v);};                          // vertex with texture coordinates
-	public void show(myPoint[] ara, myVector srfcTan, myVector srfcBiNrm, int type) {
-		myPoint v = new myPoint(ara[0], .5f, ara[ara.length/2]); myVector vc;
+	public void vTextured(myPointf P, float u, float v) {vertex((float)P.x,(float)P.y,(float)P.z,(float)u,(float)v);};                          // vertex with texture coordinates
+	public void show(myPointf[] ara, myVectorf srfcTan, myVectorf srfcBiNrm, int type) {
+		myPointf v = new myPointf(ara[0], .5f, ara[ara.length/2]); myVectorf vc;
 		beginShape(); 
 			texture(flkSails[type]);
-			for(int i=0;i<ara.length;++i){	vc = new myVector(v,ara[i]);	vTextured(ara[i],myVector._dot(vc,srfcTan), myVector._dot(vc,srfcBiNrm));} 
+			for(int i=0;i<ara.length;++i){	vc = new myVectorf(v,ara[i]);	vTextured(ara[i],myVectorf._dot(vc,srfcTan), myVectorf._dot(vc,srfcBiNrm));} 
 		endShape(CLOSE);
 	}//
-	public void show(myPoint[] ara, myPoint[] uvAra, int type) {
+	public void show(myPointf[] ara, myPointf[] uvAra, int type) {
 		beginShape(); 
 			texture(flkSails[type]);
 			for(int i=0;i<ara.length;++i){	vTextured(ara[i], uvAra[i].y, uvAra[i].x);} 
 		endShape(CLOSE);
 	}//
 	
-	boolean cw(myVector U, myVector V, myVector W) {return myVector._mixProd(U,V,W)>0; }                                               // (UxV)*W>0  U,V,W are clockwise
-	boolean projectsBetween(myPoint P, myPoint A, myPoint B) {return myVector._dot(new myVector(A,P),new myVector(A,B))>0 && myVector._dot(new myVector(B,P),new myVector(B,A))>0 ; }
-	public void show(myPoint P, double r, int clr) {pushMatrix(); pushStyle(); setColorValFill(clr); setColorValStroke(clr);sphereDetail(5);translate((float)P.x,(float)P.y,(float)P.z); sphere((float)r); popStyle(); popMatrix();} // render sphere of radius r and center P)
-	public void show(myPoint P, double r){show(P,r, gui_Black);}
-	public void show(myPoint P, String s) {text(s, (float)P.x, (float)P.y, (float)P.z); } // prints string s in 3D at P
-	public void show(myPoint P, String s, myVector D) {text(s, (float)(P.x+D.x), (float)(P.y+D.y), (float)(P.z+D.z));  } // prints string s in 3D at P+D
-	public void showShadow(myPoint P, double r) {pushMatrix(); translate((float)P.x,(float)P.y,0); scale(1,1,0.01f); sphere((float)r); popMatrix();}
-	public String toText(myVector V){ return "("+nf((float)V.x,1,5)+","+nf((float)V.y,1,5)+","+nf((float)V.z,1,5)+")";}
+	boolean cw(myVectorf U, myVectorf V, myVectorf W) {return myVectorf._mixProd(U,V,W)>0; }                                               // (UxV)*W>0  U,V,W are clockwise
+	boolean projectsBetween(myPointf P, myPointf A, myPointf B) {return myVectorf._dot(new myVectorf(A,P),new myVectorf(A,B))>0 && myVectorf._dot(new myVectorf(B,P),new myVectorf(B,A))>0 ; }
+	public void show(myPointf P, float r, int clr) {pushMatrix(); pushStyle(); setColorValFill(clr); setColorValStroke(clr);sphereDetail(5);translate((float)P.x,(float)P.y,(float)P.z); sphere((float)r); popStyle(); popMatrix();} // render sphere of radius r and center P)
+	public void show(myPointf P, float r){show(P,r, gui_Black);}
+	public void show(myPointf P, String s) {text(s, (float)P.x, (float)P.y, (float)P.z); } // prints string s in 3D at P
+	public void show(myPointf P, String s, myVectorf D) {text(s, (float)(P.x+D.x), (float)(P.y+D.y), (float)(P.z+D.z));  } // prints string s in 3D at P+D
+	public void showShadow(myPointf P, float r) {pushMatrix(); translate((float)P.x,(float)P.y,0); scale(1,1,0.01f); sphere((float)r); popMatrix();}
+	public String toText(myVectorf V){ return "("+nf((float)V.x,1,5)+","+nf((float)V.y,1,5)+","+nf((float)V.z,1,5)+")";}
 	//
 	// ==== intersection
-	public boolean intersect(myPoint P, myPoint Q, myPoint A, myPoint B, myPoint C, myPoint X)  {return intersect(P,new myVector(P,Q),A,B,C,X); } // if (P,Q) intersects (A,B,C), return true and set X to the intersection point
-	public boolean intersect(myPoint E, myVector T, myPoint A, myPoint B, myPoint C, myPoint X) { // if ray from E along T intersects triangle (A,B,C), return true and set X to the intersection point
-		myVector EA=new myVector(E,A), EB=new myVector(E,B), EC=new myVector(E,C), AB=new myVector(A,B), AC=new myVector(A,C); 
-		boolean s=cw(EA,EB,EC), sA=cw(T,EB,EC), sB=cw(EA,T,EC), sC=cw(EA,EB,T); 		if ( (s==sA) && (s==sB) && (s==sC) ) return false;		double t = myVector._mixProd(EA,AC,AB) / myVector._mixProd(T,AC,AB);		X.set(myPoint._add(E,t,T));		return true;
+	public boolean intersect(myPointf P, myPointf Q, myPointf A, myPointf B, myPointf C, myPointf X)  {return intersect(P,new myVectorf(P,Q),A,B,C,X); } // if (P,Q) intersects (A,B,C), return true and set X to the intersection point
+	public boolean intersect(myPointf E, myVectorf T, myPointf A, myPointf B, myPointf C, myPointf X) { // if ray from E along T intersects triangle (A,B,C), return true and set X to the intersection point
+		myVectorf EA=new myVectorf(E,A), EB=new myVectorf(E,B), EC=new myVectorf(E,C), AB=new myVectorf(A,B), AC=new myVectorf(A,C); 
+		boolean s=cw(EA,EB,EC), sA=cw(T,EB,EC), sB=cw(EA,T,EC), sC=cw(EA,EB,T); 		if ( (s==sA) && (s==sB) && (s==sC) ) return false;		float t = myVectorf._mixProd(EA,AC,AB) / myVectorf._mixProd(T,AC,AB);		X.set(myPointf._add(E,t,T));		return true;
 	}
-	public boolean intersectPl(myPoint E, myVector T, myPoint A, myPoint B, myPoint C, myPoint X) { // if ray from E along T intersects triangle (A,B,C), return true and set X to the intersection point
-		myVector EA=new myVector(E,A), AB=new myVector(A,B), AC=new myVector(A,C); 		double t = myVector._mixProd(EA,AC,AB) / myVector._mixProd(T,AC,AB);		X.set(myPoint._add(E,t,T));		return true;
+	public boolean intersectPl(myPointf E, myVectorf T, myPointf A, myPointf B, myPointf C, myPointf X) { // if ray from E along T intersects triangle (A,B,C), return true and set X to the intersection point
+		myVectorf EA=new myVectorf(E,A), AB=new myVectorf(A,B), AC=new myVectorf(A,C); 		float t = myVectorf._mixProd(EA,AC,AB) / myVectorf._mixProd(T,AC,AB);		X.set(myPointf._add(E,t,T));		return true;
 	}	
-	public boolean rayIntersectsTriangle(myPoint E, myVector T, myPoint A, myPoint B, myPoint C) { // true if ray from E with direction T hits triangle (A,B,C)
-		myVector EA=new myVector(E,A), EB=new myVector(E,B), EC=new myVector(E,C); 	boolean s=cw(EA,EB,EC), sA=cw(T,EB,EC), sB=cw(EA,T,EC), sC=cw(EA,EB,T); return  (s==sA) && (s==sB) && (s==sC) ;
+	public boolean rayIntersectsTriangle(myPointf E, myVectorf T, myPointf A, myPointf B, myPointf C) { // true if ray from E with direction T hits triangle (A,B,C)
+		myVectorf EA=new myVectorf(E,A), EB=new myVectorf(E,B), EC=new myVectorf(E,C); 	boolean s=cw(EA,EB,EC), sA=cw(T,EB,EC), sB=cw(EA,T,EC), sC=cw(EA,EB,T); return  (s==sA) && (s==sB) && (s==sC) ;
 	}	  
-	public boolean edgeIntersectsTriangle(myPoint P, myPoint Q, myPoint A, myPoint B, myPoint C)  {	
-		myVector PA=new myVector(P,A), PQ=new myVector(P,Q), PB=new myVector(P,B), PC=new myVector(P,C), QA=new myVector(Q,A), QB=new myVector(Q,B), QC=new myVector(Q,C); 	boolean p=cw(PA,PB,PC), q=cw(QA,QB,QC), a=cw(PQ,PB,PC), b=cw(PA,PQ,PC), c=cw(PQ,PB,PQ); return (p!=q) && (p==a) && (p==b) && (p==c);	
+	public boolean edgeIntersectsTriangle(myPointf P, myPointf Q, myPointf A, myPointf B, myPointf C)  {	
+		myVectorf PA=new myVectorf(P,A), PQ=new myVectorf(P,Q), PB=new myVectorf(P,B), PC=new myVectorf(P,C), QA=new myVectorf(Q,A), QB=new myVectorf(Q,B), QC=new myVectorf(Q,C); 	boolean p=cw(PA,PB,PC), q=cw(QA,QB,QC), a=cw(PQ,PB,PC), b=cw(PA,PQ,PC), c=cw(PQ,PB,PQ); return (p!=q) && (p==a) && (p==b) && (p==c);	
 	}	 
-	public double rayParameterToIntersection(myPoint E, myVector T, myPoint A, myPoint B, myPoint C) {
-		myVector AE=new myVector(A,E), AB=new myVector(A,B), AC=new myVector(A,C); return - myVector._mixProd(AE,AC,AB) / myVector._mixProd(T,AC,AB);
+	public float rayParameterToIntersection(myPointf E, myVectorf T, myPointf A, myPointf B, myPointf C) {
+		myVectorf AE=new myVectorf(A,E), AB=new myVectorf(A,B), AC=new myVectorf(A,C); return - myVectorf._mixProd(AE,AC,AB) / myVectorf._mixProd(T,AC,AB);
 	}	
 	
 	public void setColorValFillSh(PShape sh, int colorVal){
@@ -1148,8 +1151,8 @@ public class Project2 extends PApplet{
 	
 	public int[] getRndClr(int alpha){return new int[]{ThreadLocalRandom.current().nextInt(0,250),ThreadLocalRandom.current().nextInt(0,250),ThreadLocalRandom.current().nextInt(0,250),alpha};	}
 	public int[] getRndClr(){return getRndClr(255);	}		
-	public Integer[] getClrMorph(int a, int b, double t){return getClrMorph(getClr(a), getClr(b), t);}    
-	public Integer[] getClrMorph(int[] a, int[] b, double t){
+	public Integer[] getClrMorph(int a, int b, float t){return getClrMorph(getClr(a), getClr(b), t);}    
+	public Integer[] getClrMorph(int[] a, int[] b, float t){
 		if(t==0){return new Integer[]{a[0],a[1],a[2],a[3]};} else if(t==1){return new Integer[]{b[0],b[1],b[2],b[3]};}
 		return new Integer[]{(int)(((1.0f-t)*a[0])+t*b[0]),(int)(((1.0f-t)*a[1])+t*b[1]),(int)(((1.0f-t)*a[2])+t*b[2]),(int)(((1.0f-t)*a[3])+t*b[3])};
 	}
