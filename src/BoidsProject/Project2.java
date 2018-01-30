@@ -50,9 +50,9 @@ public class Project2 extends PApplet{
 							corsair = 2;			//eats pirate
 	public String[] flkNames = new String[]{"Galleys","Pirates","Corsairs"};	
 	public PImage[] flkSails;						//image sigils for sails
-	//public myBoidFlock galleonFlock, corsairFlock, pirateFlock;
+
 	public flkVrs fv;										//variable that holds multiple flocks-related constants and multipliers
-	private int numFlocks = 3;						
+
 	public final int MaxNumFlocks = 3;
 	public myBoidFlock[] flocks;
 	//private int[] numCreatures = new int []{35,35,35};	
@@ -101,11 +101,11 @@ public class Project2 extends PApplet{
 		textSize(txtSz);		
 		//thread executor for multithreading
 		th_exec = Executors.newCachedThreadPool();
+		textureMode(NORMAL);		               			
 		//th_exec = new ForkJoinPool();
 		flkSails = new PImage[MaxNumFlocks];
 		println("sketchPath " + sketchPath(""));
 		for(int i=0; i<MaxNumFlocks; ++i){	flkSails[i] = loadImage(flkNames[i]+".jpg");}
-		textureMode(NORMAL);		               			
 		viewDimW = width;
 		viewDimH = height;
 		canvas3D = new myPointf[4];		//3 points to define canvas
@@ -125,26 +125,21 @@ public class Project2 extends PApplet{
 		yHuntSt = new float[]{ySpwnSt[0] + fv_ySz,ySpwnSt[1] + fv_ySz,ySpwnSt[2] + fv_ySz};				//hunt vals start here	
 	}// initOnce
 	
-	public void initProgram() {
+	public void initProgram() {//called every time flock size is changed
 		animCntr = (ThreadLocalRandom.current().nextFloat() * (maxAnimCntr-.000001f) + .000001f);//ThreadLocalRandom.current().nextFloat(.000001f, maxAnimCntr);
 		animModMult = 1;
 		drawCount = 0;
 		debugInfoString = "";
 		reInitInfoStr();
 		initCamView();
-//		drawEyeLoc = new myPointf(-1, -1, -1000);
-//		eyeInWorld = new myPointf();		
-//		simCycles = 0;
-//		eyeToMse = new myVectorf();		eyeToCtr = new myVectorf();	drawSNorm = new myVectorf();	canvasNorm = new myVectorf(); 						//normal of eye-to-mouse toward scene, current drawn object's normal to canvas
 		animPath = sketchPath("") + "\\"+prjNmLong+"_" + ThreadLocalRandom.current().nextInt(1000);
 		animFileName = "\\" + prjNmLong;
-		numFlocks = (flags[singleFlock]?1:3);
 		selFlk=-1; selVal = -1;
-		flocks = new myBoidFlock[numFlocks];
-		for(int i =0; i<numFlocks; ++i){
+		flocks = new myBoidFlock[(flags[singleFlock]?1:3)];
+		for(int i =0; i<flocks.length; ++i){
 			flocks[i]=new myBoidFlock(this,flkNames[i],numCreatures[i],i,fv);flocks[i].initFlock();
 		}
-		for(int i =0; i<numFlocks; ++i){flocks[i].setPredPreyTmpl((((i+numFlocks)+1)%numFlocks), (((i+numFlocks)-1)%numFlocks));}		
+		for(int i =0; i<flocks.length; ++i){flocks[i].setPredPreyTmpl((((i+flocks.length)+1)%flocks.length), (((i+flocks.length)-1)%flocks.length));}		
 		fv.flocks = flocks;
 	}// initProgram	
 	
@@ -169,14 +164,14 @@ public class Project2 extends PApplet{
 			if ((!cyclModCmp) || (flags[runSim])) {drawCount++;}			//needed to stop draw update so that pausing sim retains animation positions
 			if (cyclModCmp) {
 				if (flags[runSim]) {
-					for(int i =0; i<numFlocks; ++i){flocks[i].clearOutBoids();}			//clear boid accumulators of neighbors, preds and prey  initAllMaps
-					for(int i =0; i<numFlocks; ++i){flocks[i].initAllMaps();}
+					for(int i =0; i<flocks.length; ++i){flocks[i].clearOutBoids();}			//clear boid accumulators of neighbors, preds and prey  initAllMaps
+					for(int i =0; i<flocks.length; ++i){flocks[i].initAllMaps();}
 					if(flags[useOrigDistFuncs]){
-						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsOrigMultTH();}					
+						for(int i =0; i<flocks.length; ++i){flocks[i].moveBoidsOrigMultTH();}					
 					} else {						
-						for(int i =0; i<numFlocks; ++i){flocks[i].moveBoidsLinMultTH();}					
+						for(int i =0; i<flocks.length; ++i){flocks[i].moveBoidsLinMultTH();}					
 					}
-					for(int i =0; i<numFlocks; ++i){flocks[i].updateBoidMovement();}	
+					for(int i =0; i<flocks.length; ++i){flocks[i].updateBoidMovement();}	
 
 					if(flags[singleStep]){flags[runSim]=false;}
 					simCycles++;
@@ -187,39 +182,30 @@ public class Project2 extends PApplet{
 		  			buildCanvas();															//build drawing canvas based upon eye-to-scene vector
 		  		}
 	  			drawBoxBnds();
-	  			//if(flags[drawBoids]){
-  				pushMatrix();pushStyle();
+ 				pushMatrix();pushStyle();
   				translate(-gridDimX/2.0f,-gridDimY/2.0f,-gridDimZ/2.0f);
   		  		strokeWeight(.5f);
-  				//for(int i =0; i<numFlocks; ++i){for(int c = 0; c < flocks[i].boidFlock.length; ++c){flocks[i].boidFlock[c].drawMe();	}}
-  				for(int i =0; i<numFlocks; ++i){flocks[i].drawBoids();}
+  				for(int i =0; i<flocks.length; ++i){flocks[i].drawBoids();}
   				popStyle();popMatrix();
-	  			//} 
 			}// if drawcount mod cyclemoddraw = 0	  		
 	   popMatrix(); 
 	}//draw3D
 	
-	public void drawPanel(){
-		
+	public void drawPanel(){	
 		
 	}
+	
 	//find mouse force exerted upon a particular location
 	public myVectorf mouseForceAtLoc(myPointf _loc){
 		myPointf mouseFrcLoc = new myPointf(dfCtr.x+gridDimX/2.0f,dfCtr.y+gridDimY/2.0f,dfCtr.z+gridDimZ/2.0f);// new myVectorf(lstClkX,0,lstClkY);//translate click location to where the space where the boids are	
-		float dist =  myPointf._dist(_loc, mouseFrcLoc);
-		if(dist==0){dist=.01f;}
-		float mag = (flags[attractMode]? 1 : -1) * msClickForce / (dist*dist);
-		return forceAttract(mouseFrcLoc, _loc, mag);
+		myVectorf resFrc = new myVectorf(_loc, mouseFrcLoc);		
+		float sqDist = resFrc.sqMagn;
+		if(sqDist<epsValCalc){sqDist=epsValCalc;}
+		float mag = (flags[attractMode]? 1 : -1) * msClickForce / sqDist;
+		resFrc._scale(mag);
+		return resFrc;	
 	}//mouseForceAtLoc
 	
-	//force of magnitude mag from b to a 
-	public myVectorf forceAttract(myPointf a, myPointf b, float mag){
-		myVectorf resFrc = (myVectorf._sub(a, b));
-		resFrc._normalize();
-		resFrc._mult(mag);
-		return resFrc;	
-	}//forceAttract	
-
 	//animation speed control for any animated constructs being drawn here
 	public float animMod(){	return animModMult*(baseAnimSpd);	}
 	//per-draw animation incrementer
@@ -229,11 +215,11 @@ public class Project2 extends PApplet{
 		if((animCntr>maxAnimCntr)||(animCntr<0)){animModMult *= -1;}
 	}//animIncr		
 	
-	public void scatterBoids(){	for(int i =0; i<numFlocks; ++i){flocks[i].scatterBoids();}}//randomly scatter creatures 	
+	public void scatterBoids(){	for(int i =0; i<flocks.length; ++i){flocks[i].scatterBoids();}}//randomly scatter creatures 	
 	public void modPopulation(int mod){	flocks[curFlock].modBoidPop(mod);}//modify population by mod
 	
 	//clear out all forces for all boids, for debug purposes
-	public void clearAllForces(){for(int i =0; i<numFlocks; ++i){flocks[i].clearBoidForces();	}}
+	public void clearAllForces(){for(int i =0; i<flocks.length; ++i){flocks[i].clearBoidForces();	}}
 	
 	//address all flag-setting here, so that if any special cases need to be addressed they can be
 	public void setFlags(int idx, boolean val ){
@@ -271,8 +257,8 @@ public class Project2 extends PApplet{
 			case '=' : {modPopulation(1); break;}
 			case '_' : {modPopulation(-10); break;}	
 			case '-' : {modPopulation(-1); break;}	
-			case '[' : {curFlock = ((curFlock+numFlocks - 1) % numFlocks); break;}
-			case ']' : {curFlock = ((curFlock+1) % numFlocks); break;}
+			case '[' : {curFlock = ((curFlock+flocks.length - 1) % flocks.length); break;}
+			case ']' : {curFlock = ((curFlock+1) % flocks.length); break;}
 			case 'd' :
 			case 'D' : {setFlags(debugMode,!flags[debugMode]);break;}
 			case 'a' :
@@ -378,7 +364,7 @@ public class Project2 extends PApplet{
 	//dev/debug flags
 	public final int debugMode 			= 0;			//whether we are in debug mode or not	
 	public final int showVelocity 		= 1;			//whether or not to show boid velocity vector
-	public final int showFlkMbrs		= 2;
+	public final int showFlkMbrs		= 2;			//whether or not to show actual subflock members (i.e. neigbhors,colliders, preds, etc) when debugging
 	public final int drawBoids			= 3;			// whether or not to render results (sim only or sim + render)
 	public final int saveAnim 			= 4;			// whether or not to save frame shots	
 	
@@ -404,7 +390,7 @@ public class Project2 extends PApplet{
 	public final int flkHunger			= 18;			//can get hungry	
 	public final int flkSpawn			= 19;			//allow breeding
 	
-	public final int clearPath 			= 20;			// whether or not to allow creatures to wander off the path i.e. clear the window every display	
+	public final int clearPath 			= 20;			// whether or not to clear the window every display (show past positions of boids)	
 	public final int singleFlock		= 21;			// whether to restart with 1 flock or 3
 	public final int useOrigDistFuncs	= 22;			//whether to use original reynolds-inspired dist functions or alternate linear dist functions in force calculations
 	// number of flags in the boolean flags array
@@ -412,7 +398,7 @@ public class Project2 extends PApplet{
 	
 	private boolean showInfo;							//only used to hide/show info at top of screen
 	
-	public final String[] flagNames = {
+	public final String[] trueFlagNames = {
 			"Debug Mode",		
 			"Show Velocity",
 			"Show DB FlkMbrs",
@@ -438,7 +424,7 @@ public class Project2 extends PApplet{
 			"Use Orig Dist Funcs"
 			};
 	
-	public final String[] altFlagNames = {
+	public final String[] falseFlagNames = {
 			"Debug Mode",		
 			"Show Velocity",
 			"Show DB FlkMbrs",
@@ -488,7 +474,7 @@ public class Project2 extends PApplet{
 		xHuntEnd = xHuntSt + 3*xWidL;										//hunt vals start here
 
 	float[] xValSize, yRadSt,yWtSt,ySpwnSt,yHuntSt;				//y values for UI-modifiable flock values
-	float bdgSizeX = 20, bdgSizeY = 15;
+	public final float bdgSizeX = 20, bdgSizeY = 15;
 	public myPointf[] mnBdgBox = new myPointf[]{new myPointf(0,0,0),new myPointf(0,bdgSizeY,0),new myPointf(bdgSizeX,bdgSizeY,0),new myPointf(bdgSizeX,0,0)};
 	public myPointf[] mnUVBox = new myPointf[]{new myPointf(0,0,0),new myPointf(1,0,0),new myPointf(1,1,0),new myPointf(0,1,0)};
 	
@@ -558,8 +544,6 @@ public class Project2 extends PApplet{
 
 	public float canvasDim = 1500; 									//canvas dimension for "virtual" 3d		
 	public myPointf[] canvas3D;									//3d plane, normal to camera eye, to be used for drawing - need to be in "view space" not in "world space", so that if camera moves they don't change
-	
-	
 	
 	///////////////////////////////////
 	/// generic graphics functions and classes
@@ -632,12 +616,13 @@ public class Project2 extends PApplet{
 		return dctr;		
 	}//getPlInterSect
 	
+	private float cameraZd10 = ((height/2.0f) / tan(PI/6.0f))/10.0f; 
 	//drawsInitial setup for each draw
 	public void drawSetup(){
-		camera();       // sets a standard perspective
+		perspective(THIRD_PI, (1.0f*width)/height, cameraZd10, cameraZd10*1000.0f);// where cameraZ is ((height/2.0) / tan(PI*60.0/360.0)); 
+		camera();       // sets a standard camera - camera(width/2.0f, height/2.0f, (height/2.0f) / tan(PI*30.0f / 180.0f), width/2.0f, height/2.0f, 0, 0, 1, 0);
 		translate((float)width/2.0f,(float)height/2.0f,(float)dz); // puts origin of model at screen center and moves forward/away by dz
 	    setCamOrient();
-	    //noLights();  // turns on view-dependent lighting
 	    ambientLight(115, 115, 115);
 	    lightSpecular(111, 111, 111);
 	    shininess(5.0f);
@@ -687,9 +672,9 @@ public class Project2 extends PApplet{
 			pushMatrix();pushStyle();			
 			reInitInfoStr();
 			addInfoStr(0,"mse loc on screen : " + new myPointf(mouseX, mouseY,0) + " mse loc in world :"+mseLoc +"  Eye loc in world :"+ eyeInWorld); 
-			addInfoStr(1,"Num Flocks : "+numFlocks);
+			addInfoStr(1,"Num Flocks : "+flocks.length);
 			String[] res;
-			for(int i =0; i<numFlocks; ++i){res = flocks[i].getInfoString();for(int s=0;s<res.length;++s) {	addInfoStr(res[s]);}}
+			for(int i =0; i<flocks.length; ++i){res = flocks[i].getInfoString();for(int s=0;s<res.length;++s) {	addInfoStr(res[s]);}}
 			drawInfoStr(1.0f); 	
 			popStyle();	popMatrix();		
 		}
@@ -733,9 +718,9 @@ public class Project2 extends PApplet{
 		text("Boolean Flags",0,-yOff*.25f);
 		for(int i =0; i<numFlags; ++i){
 			translate(xOff*.5f,yOff*.5f);
-			if(flags[i] ){													dispFlagTxt(flagNames[i],flagColors[i], true);			}
-			else {	if(flagNames[i].equals(altFlagNames[i])) {				dispFlagTxt(flagNames[i],new int[]{180,180,180}, false);}	
-					else {													dispFlagTxt(altFlagNames[i],new int[]{0,255-flagColors[i][1],255-flagColors[i][2]}, true);}		
+			if(flags[i] ){													dispFlagTxt(trueFlagNames[i],flagColors[i], true);			}
+			else {	if(trueFlagNames[i].equals(falseFlagNames[i])) {				dispFlagTxt(trueFlagNames[i],new int[]{180,180,180}, false);}	
+					else {													dispFlagTxt(falseFlagNames[i],new int[]{0,255-flagColors[i][1],255-flagColors[i][2]}, true);}		
 			}
 		}		
 		popStyle();
@@ -754,7 +739,7 @@ public class Project2 extends PApplet{
 		translate(0,yOff*.75f);
 		text("Hunts : " + flkNames[flocks[curFlock].preyFlock.type]+ " Hunted by : "+ flkNames[flocks[curFlock].predFlock.type],0,-yOff*.25f);
 		translate(0,yOff);
-		for(int i =0; i<numFlocks; ++i){
+		for(int i =0; i<flocks.length; ++i){
 			drawFlockMenu(i);
 		}				
 		hint(ENABLE_DEPTH_TEST);

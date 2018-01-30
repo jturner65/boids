@@ -3,8 +3,6 @@ package BoidsProject;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ThreadLocalRandom;
 
-import processing.core.PConstants;
-
 /**
  * class defining a creature object for flocking
  * @author John
@@ -14,7 +12,6 @@ public class myBoid {
 	public myBoidFlock f;
 	public flkVrs fv;
 	
-	//public myStencil st;														//performs calculations
 	public int ID;
 	public static int IDcount = 0;
 	
@@ -44,13 +41,10 @@ public class myBoid {
 	public static final float maxAnimCntr = 1000.0f, baseAnimSpd = 1.0f;
 	public final float preCalcAnimSpd;
 	//boat construction variables
-	//public int[] sailColor;
-	public final int type,gender,bodyColor;													//for spawning gender = 0 == female, 1 == male;
+	public final int type,gender;													//for spawning gender = 0 == female, 1 == male;
 	public final int O_FWD = 0, O_RHT = 1,  O_UP = 2;
 		
 	public ConcurrentSkipListMap<Float, myBoid> neighbors,			//sorted map of neighbors to this boid
-						//			colliders,			//sorted map of colliding neighbors to this boid - built when neighbors are built
-						//			predFlk,				//sorted map of predators near this boid
 									preyFlk,				//sorted map of prey near this boid
 									ptnWife;				//sorted map of potential mates near this boid
 	
@@ -61,7 +55,6 @@ public class myBoid {
 			
 	public myBoid(Project2 _p, myBoidFlock _f,  myPointf _coords, int _type, flkVrs _fv){
 		ID = IDcount++;		p = _p;		f = _f; 
-		//st = _st; 
 		fv=_fv;
 		initbd_flags();
 		rotVec = myVectorf.RIGHT.cloneMe(); 			//initial setup
@@ -87,8 +80,6 @@ public class myBoid {
 		oldRotAngle = 0;
 		gender = ThreadLocalRandom.current().nextInt(1000)%2;												//0 or 1
 		neighbors 	= new ConcurrentSkipListMap<Float, myBoid>();
-	//	colliders 	= new ConcurrentSkipListMap<Float, myBoid>();
-	//	predFlk 	= new ConcurrentSkipListMap<Float, myBoid>();
 		preyFlk 	= new ConcurrentSkipListMap<Float, myBoid>();
 		ptnWife 	= new ConcurrentSkipListMap<Float, myBoid>();
 		
@@ -97,8 +88,6 @@ public class myBoid {
 		predFlkLoc	= new ConcurrentSkipListMap<Float, myPointf>();
 		preyFlkLoc	= new ConcurrentSkipListMap<Float, myPointf>();
 		
-		bodyColor = fv.bodyColor[type];
-
 	}//constructor
 	
 	public void setInitState(){
@@ -166,34 +155,6 @@ public class myBoid {
 		this.forces[0].set(bVelFrc[1]);this.forces[1].set(bVelFrc[1]); 
 		//setOrientation();
 	}
-	
-//	public void setOrientation(){
-//		//find new orientation at new coords - creature is oriented in local axes as forward being positive z and up being positive y vectors correspond to columns, x/y/z elements correspond to rows
-//		orientation[O_FWD].set(getFwdVec());
-//		orientation[O_UP].set(getUpVec());	
-//		orientation[O_RHT] = orientation[O_UP]._cross(orientation[O_FWD]); //sideways is cross of up and forward - backwards(righthanded)
-//		orientation[O_RHT].set(orientation[O_RHT]._normalize());
-//		//need to recalc up?  may not be perp to normal
-//		if(Math.abs(orientation[O_FWD]._dot(orientation[O_UP])) > p.epsValCalc){
-//			orientation[O_UP] = orientation[O_FWD]._cross(orientation[O_RHT]); //sideways is cross of up and forward
-//			orientation[O_UP].set(orientation[O_UP]._normalize());
-//		}
-//		O_axisAngle = toAxisAngle();
-//	}
-	
-//	private myVectorf getFwdVec(){				
-//		if( velocity[0].magn==0){			return orientation[O_FWD]._normalize();		}
-//		else {		
-//			myVectorf tmp = velocity[0].cloneMe();	
-//			tmp._normalize();return new myVectorf(orientation[O_FWD], f.delT, tmp);		
-//		}
-//	}	
-//	private myVectorf getUpVec(){		
-//		if (Math.abs(orientation[O_FWD]._dot(myVectorf.UP) -1)< p.epsValCalc){
-//			return myVectorf._cross(orientation[O_RHT], orientation[O_FWD]);
-//		}
-//		return myVectorf.UP.cloneMe();
-//	}
 
 	//align the boid along the current orientation matrix
 	private void alignBoid(){
@@ -218,12 +179,10 @@ public class myBoid {
 			if(p.flags[p.debugMode]){drawMyVec(rotVec, Project2.gui_Black,4.0f);p.drawAxes(100, 2.0f, new myPointf(0,0,0), orientation, 255);}
 			if(p.flags[p.showVelocity]){drawMyVec(velocity[0], Project2.gui_DarkMagenta,.5f);}
 			alignBoid();
-			p.rotate(PConstants.PI/2.0f,1,0,0);
-			p.rotate(PConstants.PI/2.0f,0,1,0);
+			p.rotate(p.PI/2.0f,1,0,0);
+			p.rotate(p.PI/2.0f,0,1,0);
 			p.scale(scaleBt.x,scaleBt.y,scaleBt.z);																	//make appropriate size				
-			p.pushStyle();
-			f.tmpl.drawMe(animCntr,bodyColor, type);
-			p.popStyle();			
+			f.tmpl.drawMe(animCntr, type);
 		p.popStyle();p.popMatrix();
 		animIncr();
 	}//drawme 
@@ -268,9 +227,7 @@ public class myBoid {
 			p.sphere(10);
 		p.popStyle();p.popMatrix();
 		
-	}
-	
-	
+	}	
 	//public float calcBobbing(){		return 2*(p.cos(.01f*animCntr));	}		//bobbing motion
 	
 	public void drawMyVec(myVectorf v, int clr, float sw){
@@ -292,41 +249,7 @@ public class myBoid {
 //		if((animCntr>maxAnimCntr)||(animCntr<0)){
 //			animCntr =0;
 //		}
-	}//animIncr		
-
-//	public float[] toAxisAngle() {
-//		float angle, rt2 = .5f*Math.sqrt(2),x=rt2,y=rt2,z=rt2,s;
-//		if ((Math.abs(orientation[O_FWD].y-orientation[O_RHT].x) < p.epsValCalc)
-//		  && (Math.abs(orientation[O_UP].x-orientation[O_FWD].z) < p.epsValCalc)
-//		  && (Math.abs(orientation[O_RHT].z-orientation[O_UP].y) < p.epsValCalc)) {			//checking for rotational singularity
-//			// angle == 0
-//			if ((Math.abs(orientation[O_FWD].y+orientation[O_RHT].x) < 1) && (Math.abs(orientation[O_FWD].z+orientation[O_UP].x) < 1) && (Math.abs(orientation[O_RHT].z+orientation[O_UP].y) < 1)
-//			  && (Math.abs(orientation[O_FWD].x+orientation[O_RHT].y+orientation[O_UP].z-3) < 1)) {	return new float[]{0,1,0,0}; }
-//			// angle == pi
-//			angle = PConstants.PI;
-//			float fwd2x = (orientation[O_FWD].x+1)/2.0f,rht2y = (orientation[O_RHT].y+1)/2.0f,up2z = (orientation[O_UP].z+1)/2.0f,
-//				fwd2y = (orientation[O_FWD].y+orientation[O_RHT].x)/4.0f, fwd2z = (orientation[O_FWD].z+orientation[O_UP].x)/4.0f, rht2z = (orientation[O_RHT].z+orientation[O_UP].y)/4.0f;
-//			if ((fwd2x > rht2y) && (fwd2x > up2z)) { // orientation[O_FWD].x is the largest diagonal term
-//				if (fwd2x< p.epsValCalc) {	x = 0;} else {			x = Math.sqrt(fwd2x);y = fwd2y/x;z = fwd2z/x;}
-//			} else if (rht2y > up2z) { 		// orientation[O_RHT].y is the largest diagonal term
-//				if (rht2y< p.epsValCalc) {	y = 0;} else {			y = Math.sqrt(rht2y);x = fwd2y/y;z = rht2z/y;}
-//			} else { // orientation[O_UP].z is the largest diagonal term so base result on this
-//				if (up2z< p.epsValCalc) {	z = 0;} else {			z = Math.sqrt(up2z);	x = fwd2z/z;y = rht2z/z;}
-//			}
-//			return new float[]{angle,x,y,z}; // return 180 deg rotation
-//		}
-//		//no singularities - handle normally
-//		s = Math.sqrt((orientation[O_UP].y - orientation[O_RHT].z)*(orientation[O_UP].y - orientation[O_RHT].z)
-//						+(orientation[O_FWD].z - orientation[O_UP].x)*(orientation[O_FWD].z - orientation[O_UP].x)
-//						+(orientation[O_RHT].x - orientation[O_FWD].y)*(orientation[O_RHT].x - orientation[O_FWD].y)); // used to normalise
-//		if (Math.abs(s) < p.epsValCalc){ s=1; }
-//			// prevent divide by zero, should not happen if matrix is orthogonal -- should be caught by singularity test above
-//		angle = -Math.acos(( orientation[O_FWD].x + orientation[O_RHT].y + orientation[O_UP].z - 1)/2);
-//		x = (orientation[O_UP].y - orientation[O_RHT].z)/s;
-//		y = (orientation[O_FWD].z - orientation[O_UP].x)/s;
-//		z = (orientation[O_RHT].x - orientation[O_FWD].y)/s;
-//	   return new float[]{angle,x,y,z};
-//	}//toAxisAngle
+	}//animIncr	
 	
 	public String toString(){
 		String result = "ID : " + ID + " Type : "+p.flkNames[f.type]+" | Mass : " + mass + " | Spawn CD "+spawnCntr + " | Starve CD " + starveCntr+"\n";

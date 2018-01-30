@@ -49,7 +49,7 @@ public class myUpdateStencil implements Callable<Boolean> {
 				&& ((b.orientation[O_RHT].z+b.orientation[O_UP].y)*(b.orientation[O_RHT].z+b.orientation[O_UP].y) < 1)
 			  && ((b.orientation[O_FWD].x+b.orientation[O_RHT].y+b.orientation[O_UP].z-3)*(b.orientation[O_FWD].x+b.orientation[O_RHT].y+b.orientation[O_UP].z-3) < 1)) {	return new float[]{0,1,0,0}; }
 			// angle == pi
-			angle = 3.1415927f;
+			angle = p.PI;
 			float fwd2x = (b.orientation[O_FWD].x+1)/2.0f,rht2y = (b.orientation[O_RHT].y+1)/2.0f,up2z = (b.orientation[O_UP].z+1)/2.0f,
 				fwd2y = (b.orientation[O_FWD].y+b.orientation[O_RHT].x)/4.0f, fwd2z = (b.orientation[O_FWD].z+b.orientation[O_UP].x)/4.0f, rht2z = (b.orientation[O_RHT].z+b.orientation[O_UP].y)/4.0f;
 			if ((fwd2x > rht2y) && (fwd2x > up2z)) { // b.orientation[O_FWD].x is the largest diagonal term
@@ -64,11 +64,11 @@ public class myUpdateStencil implements Callable<Boolean> {
 		//no singularities - handle normally
 		myVectorf tmp = new myVectorf((b.orientation[O_UP].y - b.orientation[O_RHT].z), (b.orientation[O_FWD].z - b.orientation[O_UP].x), (b.orientation[O_RHT].x - b.orientation[O_FWD].y));
 		s = tmp.magn;
-		tmp._normalize();
 		//		s = Math.sqrt((b.orientation[O_UP].y - b.orientation[O_RHT].z)*(b.orientation[O_UP].y - b.orientation[O_RHT].z)
 //						+(b.orientation[O_FWD].z - b.orientation[O_UP].x)*(b.orientation[O_FWD].z - b.orientation[O_UP].x)
 //						+(b.orientation[O_RHT].x - b.orientation[O_FWD].y)*(b.orientation[O_RHT].x - b.orientation[O_FWD].y)); // used to normalise
 		if (s < p.epsValCalc){ s=1; }
+		tmp._scale(s);
 			// prevent divide by zero, should not happen if matrix is orthogonal -- should be caught by singularity test above
 		angle = (float) -Math.acos(( b.orientation[O_FWD].x + b.orientation[O_RHT].y + b.orientation[O_UP].z - 1)/2);
 //		x = (b.orientation[O_UP].y - b.orientation[O_RHT].z)/s;

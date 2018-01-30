@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
-import processing.core.PApplet;
 
 //struct-type class to hold flocking variables
 public class flkVrs {
@@ -59,9 +58,7 @@ public class flkVrs {
 			MaxHuntAra = new float[]{.1f,10000,100000},							
 			MinHuntAra = new float[]{.00001f, 10, 100};		
 	public float[] maxFrc = new float[]{200,200,200};
-	
-	public static final ArrayList<String> typeNames = new ArrayList<String>(Arrays.asList (new String[] {"Galley","Pirate", "Corsair"} ));	
-	
+		
 	public flkVrs(Project2 _p, int numSpc) {
 		p=_p;
 		numFlocks = numSpc;
@@ -69,7 +66,7 @@ public class flkVrs {
 	}
 	
 	public void initFlockVals(){
-		nghbrRadMax = PApplet.min(p.gridDimY, p.gridDimZ, p.gridDimX)*neighborMult;
+		nghbrRadMax = p.min(p.gridDimY, p.gridDimZ, p.gridDimX)*neighborMult;
 		nghbrRad = new float[]{nghbrRadMax, nghbrRadMax*.85f, nghbrRadMax*.6f};
 		colRad  = new float[]{nghbrRad[0]*.1f, nghbrRad[1]*.1f, nghbrRad[2]*.1f}; 
 		velRad  = new float[]{nghbrRad[0]*.5f, nghbrRad[1]*.5f, nghbrRad[2]*.5f}; 			
@@ -171,7 +168,7 @@ public class flkVrs {
 	public String[] getData(int s){
 		String res[] = new String[8];
 		int idx = 0;
-		res[idx++] = flocks[s].numBoids + " " + typeNames.get(s) + "s limits: V: ["+String.format("%.2f", (minVelMag[s]))+"," + String.format("%.2f", (maxVelMag[s]))+"] M ["+ String.format("%.2f", (massForType[s][0])) + "," + String.format("%.2f", (massForType[s][1]))+"]" ;
+		res[idx++] = flocks[s].numBoids + " " + p.flkNames[s] + "' limits: V: ["+String.format("%.2f", (minVelMag[s]))+"," + String.format("%.2f", (maxVelMag[s]))+"] M ["+ String.format("%.2f", (massForType[s][0])) + "," + String.format("%.2f", (massForType[s][1]))+"]" ;
 		res[idx++] = "Radius : Flock |  Avoid  |  VelMatch ";
 		res[idx++] = "           "+(nghbrRad[s] > 10 ?(nghbrRad[s] > 100 ? "":" "):"  ")+String.format("%.2f",nghbrRad[s])+" | "+(colRad[s] > 10 ?(colRad[s] > 100 ? "":" "):"  ")+String.format("%.2f",colRad[s])+" | "+(velRad[s] > 10 ?(velRad[s] > 100 ? "":" "):"  ")+ String.format("%.2f",velRad[s]);
 		res[idx++] = "Wts: Ctr |  Avoid | VelM | Wndr | AvPrd | Chase" ;

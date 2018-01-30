@@ -25,13 +25,6 @@ public class myBoidFlock {
 	
 	//public float delT;							//boid sim timestep - set at beginning of every update cycle
 	
-	public boolean[] bflk_flags;	
-	public final static int useLifespan 	= 0,		//uses lifespan value of cell
-							is3dIDX 		= 1,		//creatures live in 3d world
-							boundedPercep 	= 2,		//whether or not creatures have limited perceptions
-							wghtSqCom 		= 3;		//whether or not to use the inverse square weighting for the com calculation
-	public final int numbflk_flags = 4;	
-	
 	public final int type, mtFrameSize = 100;	
 	public myBoatRndrObj tmpl;							//template to render boid	
 	public myBoidFlock preyFlock, predFlock;		//direct reference to flock that is my prey and my predator -- set in main program after init is called
@@ -48,8 +41,6 @@ public class myBoidFlock {
 		p = _p;	name = _name;fv = _fv;
 		//delT = .1f;
 		setNumBoids(_numBoids);
-		initbflk_flags(true);
-		bflk_flags[useLifespan]=false;
 		totMaxRad = p.gridDimX + p.gridDimY + p.gridDimZ;
 		type = _type;
 
@@ -68,7 +59,6 @@ public class myBoidFlock {
 	}//myBoidFlock constructor
 	//init bflk_flags state machine
 	
-	public void initbflk_flags(boolean initVal){bflk_flags = new boolean[numbflk_flags];for(int i=0;i<numbflk_flags;++i){bflk_flags[i]=initVal;}}
 	public void initFlock(){
 		boidFlock = new ArrayList<myBoid>(numBoids);
 		//System.out.println("make flock of size : "+ numBoids);

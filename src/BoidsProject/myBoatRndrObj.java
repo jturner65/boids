@@ -1,4 +1,5 @@
 package BoidsProject;
+
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PShape;
@@ -13,9 +14,9 @@ public class myBoatRndrObj {
 	private static boolean made = false;
 	private static myPointf[][] boatRndr;	
 	//precalc consts
-	private final float pi4thrds = 4*PConstants.PI/3.0f, pi100th = .01f*PConstants.PI, pi6ths = PConstants.PI/6.0f, pi3rds = PConstants.PI/3.0f;
+	private final float pi4thrds = 4.0f*PConstants.PI/3.0f, pi100th = .01f*PConstants.PI, pi6ths = PConstants.PI/6.0f, pi3rds = PConstants.PI/3.0f;
 	
-	private final int numOars = 5, numAnimFrm = 30;
+	private final int numOars = 5, numAnimFrm = 90;
 	
 	private static PShape[] poles, boat;								//1 shape for each type of boat
 	private static PShape[][] oars;										//1 array for each type of boat, 1 element for each animation frame of oar motion
@@ -68,7 +69,7 @@ public class myBoatRndrObj {
 	}
 	//build masts and oars(multiple orientations in a list to just show specific frames)
 	private void initBoatMasts(){	
-		int[] sailColor = new int[4], strokeColor; int fillColor;
+		int[] sailColor = new int[]{255,255,255,255}, strokeColor; int fillColor;
 		myVectorf[] trans1Ara = new myVectorf[]{new myVectorf(0, 3.5f, -3),new myVectorf(0, 1.5f, 1),new myVectorf(0, 2.3f, 5),new myVectorf(0, 2.3f, 7)},
 				scale1Ara = new myVectorf[]{new myVectorf(.95f,.85f,1),new myVectorf(1.3f,1.2f,1),new myVectorf(1f,.9f,1),new myVectorf(1,1,1)};
 		
@@ -76,11 +77,11 @@ public class myBoatRndrObj {
 		
 		for(int t = 0; t < p.MaxNumFlocks; ++t){
 			fillColor = fv.bodyColor[t];
-			fv.setSailColor(t, sailColor);
+			//fv.setSailColor(t, sailColor);
 			strokeColor =  p.getClr(fillColor);
 			int idx = 0;
 			for(int rep = 0; rep < 3; rep++){buildSail(t, idx, pts7,pts5, (t==2), fillColor, sailColor, strokeColor,trans1Ara[idx],  scale1Ara[idx]);idx++; }
-			buildSail(t, idx, pts3,pts3, true, fillColor, sailColor, strokeColor,trans1Ara[idx],  scale1Ara[idx]);idx++;	   //
+			buildSail(t, idx, pts3,pts3, true, fillColor, sailColor, strokeColor,trans1Ara[idx],  scale1Ara[idx]);//idx++;	   //
 			
 			for(int j = 0; j<trans1Ara.length; ++j){
 				if(j==3){
@@ -94,18 +95,12 @@ public class myBoatRndrObj {
 				}					
 			}
 			for(int j = 0; j < numAnimFrm; ++j){
-				float animCntr = (j/(1.0f*numAnimFrm)) * (float)myBoid.maxAnimCntr;
+				float animCntr = (j* myBoid.maxAnimCntr/(1.0f*numAnimFrm)) ;
 				buildOars(t, j, animCntr, 1, fillColor, sailColor, strokeColor, new myVectorf(0, 0.3f, 3));
 				buildOars(t, j, animCntr, -1, fillColor, sailColor, strokeColor, new myVectorf(0, 0.3f, 3));
 			}
 		}//for each flock
 	}//initBoatMasts	
-	public void drawMe(double animCntr, int mastColor, int type){
-		p.shape(boat[type]);
-		int idx = (int)((animCntr/myBoid.maxAnimCntr) * numAnimFrm);			//determine which in the array of oars, corresponding to particular orientations, we should draw
-		p.shape(oars[type][idx]);
-	}
-
 	//build oars to orient in appropriate position for animIdx frame of animation - want all numAnimFrm of animation to cycle
 	public void buildOars(int type, int animIdx, float animCntr, float dirMult, int fillColor, int[] sailColor, int[] strokeColor, myVectorf transVec){
 		PShape sh = p.createShape(PConstants.GROUP);
@@ -114,7 +109,8 @@ public class myBoatRndrObj {
 		myVectorf transVec1 = new myVectorf(0,0,0);
 		float disp = 0, d=-6, distMod = 10.0f/numOars;
 		for(int i =0; i<numOars;++i){
-			float ca = pi4thrds + .65f*PApplet.cos(animCntr*pi100th), sa = pi6ths + .65f*PApplet.sin(((animCntr + i/(1.0f*numOars)))*pi100th);
+			float ca = pi4thrds + .65f*PApplet.cos(animCntr*pi100th), 
+					sa = pi6ths + .65f*PApplet.sin(((animCntr + i/(1.0f*numOars)))*pi100th);
 			sh = p.createShape();
 			transVec1.set((transVec.x)+dirMult*1.5f, transVec.y, (transVec.z)+ d+disp);//sh.translate((transVec.x)+dirMult*1.5f, transVec.y, (transVec.z)+ d+disp);
 			rotAra2 = new float[]{ca, 0,0,dirMult};
@@ -125,6 +121,12 @@ public class myBoatRndrObj {
 		}		
 		
 	}//buildOars
+
+	public void drawMe(double animCntr, int type){
+		p.shape(boat[type]);
+		int idx = (int)((animCntr/myBoid.maxAnimCntr) * numAnimFrm);			//determine which in the array of oars, corresponding to particular orientations, we should draw
+		p.shape(oars[type][idx]);
+	}
 
 	
 	//build the grouped pshape object representing the boat
@@ -145,8 +147,8 @@ public class myBoatRndrObj {
 			sh.rotate(PConstants.HALF_PI, 0,0,1 );
 			sh.translate(1,-1.3f,0);		
 			sh.beginShape(); 
+			sh.fill(255,255,255,255); sh.ambient(255,255,255);
 			shgl_show(sh, pts1, uvAra, type);
-			p.setColorValFillSh(sh, Project2.gui_White);
 			sh.endShape(PConstants.CLOSE); 
 			boat[type].addChild(sh);			
 		}
@@ -157,9 +159,9 @@ public class myBoatRndrObj {
 			sh.rotate(PConstants.HALF_PI, 0,0,1 );
 			sh.translate(0,-3.5f,0);
 			sh.beginShape(); 
+			sh.fill(255,255,255,255); sh.ambient(255,255,255);
 			if(renderSigil){		shgl_show(sh, pts1, uvAra, type);	}
 			else {					shgl_show(sh,pts1, sailColor);}
-			p.setColorValFillSh(sh, Project2.gui_White);
 			sh.endShape(PConstants.CLOSE); 
 			boat[type].addChild(sh);
 	
@@ -171,84 +173,32 @@ public class myBoatRndrObj {
 			sh.translate(0,-3.5f,0);
 			sh.translate(4.5f,1,0);
 			sh.beginShape(); 			
+			sh.fill(255,255,255,255); sh.ambient(255,255,255);
 			if(!renderSigil){		shgl_show(sh, pts2, uvAra, type);	}
 			else {					shgl_show(sh,pts2, sailColor);}
-			p.setColorValFillSh(sh, Project2.gui_White);
 			sh.endShape(PConstants.CLOSE); 
 			boat[type].addChild(sh);
 		}
 		
 	}//drawSail
 	
-	public void buildPoleOld(int type, int poleNum, float rad, float height,int fillColor,  int[] sailColor, int[] strokeColor,
-			boolean drawBottom, myVectorf transVec, myVectorf scaleVec, float[] rotAra, myVectorf trans2Vec, float[] rotAra2, myVectorf trans3Vec){
-		float theta, theta2, rsThet, rcThet, rsThet2, rcThet2;
-		float numTurns = 6;
-		PShape sh;
-		for(int i = 0; i <numTurns; ++i){
-			theta = (i/numTurns) * PConstants.TWO_PI;
-			theta2 = (((i+1)%numTurns)/numTurns) * PConstants.TWO_PI;
-			rsThet = rad*PApplet.sin(theta);
-			rcThet = rad*PApplet.cos(theta);
-			rsThet2 = rad*PApplet.sin(theta2);
-			rcThet2 = rad*PApplet.cos(theta2);
-			
-			sh = p.createShape();			
-			sh.translate(transVec.x, transVec.y, transVec.z);
-			sh.scale(scaleVec.x,scaleVec.y,scaleVec.z);
-			sh.rotate(rotAra[0],rotAra[1],rotAra[2],rotAra[3]);
-			sh.translate(trans2Vec.x, trans2Vec.y, trans2Vec.z);
-			sh.rotate(rotAra2[0],rotAra2[1],rotAra2[2],rotAra2[3]);
-			sh.translate(trans3Vec.x, trans3Vec.y, trans3Vec.z);
-			sh.beginShape(PConstants.QUAD);
-			p.setColorValFillSh(sh, fillColor);         
-			sh.stroke(strokeColor[0],strokeColor[1],strokeColor[2],strokeColor[3]); 
-				shgl_vertexf(sh,rsThet, 0, rcThet );
-				shgl_vertexf(sh,rsThet, height,rcThet);
-				shgl_vertexf(sh,rsThet2, height,rcThet2);
-				shgl_vertexf(sh,rsThet2, 0, rcThet2);
-			sh.endShape(PConstants.CLOSE);			
-			if(poleNum==5){poles[type].addChild(sh);}			
-			else{boat[type].addChild(sh);}
-			
-			sh = p.createShape();
-			sh.translate(transVec.x, transVec.y, transVec.z);
-			sh.scale(scaleVec.x,scaleVec.y,scaleVec.z);
-			sh.rotate(rotAra[0],rotAra[1],rotAra[2],rotAra[3]);
-			sh.translate(trans2Vec.x, trans2Vec.y, trans2Vec.z);
-			sh.rotate(rotAra2[0],rotAra2[1],rotAra2[2],rotAra2[3]);
-			sh.translate(trans3Vec.x, trans3Vec.y, trans3Vec.z);
-			sh.beginShape(PConstants.TRIANGLE);
-			p.setColorValFillSh(sh, fillColor);         
-			sh.stroke(strokeColor[0],strokeColor[1],strokeColor[2],strokeColor[3]); 
-				shgl_vertexf(sh,rsThet, height, rcThet );
-				shgl_vertexf(sh,0, height, 0 );
-				shgl_vertexf(sh,rsThet2, height, rcThet2 );
-			sh.endShape(PConstants.CLOSE);
-			if(poleNum==5){poles[type].addChild(sh);}
-			else{boat[type].addChild(sh);}
-			
-			if(drawBottom){
-				sh = p.createShape();
-				sh.translate(transVec.x, transVec.y, transVec.z);
-				sh.scale(scaleVec.x,scaleVec.y,scaleVec.z);
-				sh.rotate(rotAra[0],rotAra[1],rotAra[2],rotAra[3]);
-				sh.translate(trans2Vec.x, trans2Vec.y, trans2Vec.z);
-				sh.rotate(rotAra2[0],rotAra2[1],rotAra2[2],rotAra2[3]);
-				sh.translate(trans3Vec.x, trans3Vec.y, trans3Vec.z);
-				sh.beginShape(PConstants.TRIANGLE);
-				p.setColorValFillSh(sh, fillColor);   
-				sh.stroke(strokeColor[0],strokeColor[1],strokeColor[2],strokeColor[3]); 
-					shgl_vertexf(sh,rsThet, 0, rcThet );
-					shgl_vertexf(sh,0, 0, 0 );
-					shgl_vertexf(sh,rsThet2, 0, rcThet2);
-				sh.endShape(PConstants.CLOSE);
-				if(poleNum==5){poles[type].addChild(sh);}
-				else{boat[type].addChild(sh);}
-			}
-		}//for i
-	}//drawPole
-	
+	void shgl_show(PShape sh, myPointf[] ara, int[] sailColor) {
+		//sh.fill(sailColor[0],sailColor[1],sailColor[2],sailColor[3]); //doesn't seem to work (?)
+		//sh.ambient(200); 
+		sh.noStroke();	
+//		sh.strokeWeight(1.0f);
+//		sh.stroke(0,0,0,255); 
+		for(int i=0;i<ara.length;++i){shgl_vertex(sh,ara[i]);} 
+	}                  	
+	public void shgl_show(PShape sh, myPointf[] ara, myPointf[] uvAra, int type) {
+//		sh.fill(255);
+//		sh.ambient(255);
+//		sh.specular(255);	
+		sh.noStroke();
+		
+		sh.texture(p.flkSails[type]);
+		for(int i=0;i<ara.length;++i){	sh.vertex(ara[i].x,ara[i].y,ara[i].z,uvAra[i].y,uvAra[i].x);}
+	}//	
 	public PShape buildPole(int type, int poleNum, float rad, float height,int fillColor,  int[] sailColor, int[] strokeColor,
 			boolean drawBottom, myVectorf transVec, myVectorf scaleVec, float[] rotAra, myVectorf trans2Vec, float[] rotAra2, myVectorf trans3Vec, float[] rotAra3){
 		float theta, theta2, rsThet, rcThet, rsThet2, rcThet2;
@@ -332,15 +282,7 @@ public class myBoatRndrObj {
 		boat[type].addChild(sh);		
 		return btPt;
 	}
-	void shgl_show(PShape sh, myPointf[] ara, int[] sailColor) {sh.fill(255); sh.ambient(200); sh.specular(120); sh.noStroke();	for(int i=0;i<ara.length;++i){shgl_vertex(sh,ara[i]);} }                  	
-	public void shgl_show(PShape sh, myPointf[] ara, myPointf[] uvAra, int type) {
-		sh.fill(255);
-		sh.ambient(255);
-		sh.specular(255);	
-		sh.noStroke();
-		sh.texture(p.flkSails[type]);
-		for(int i=0;i<ara.length;++i){	sh.vertex(ara[i].x,ara[i].y,ara[i].z,uvAra[i].y,uvAra[i].x);}
-	}//	
+	
 	//public void shgl_vTextured(PShape sh, myPointf P, float u, float v) {sh.vertex((float)P.x,(float)P.y,(float)P.z,(float)u,(float)v);}                          // vertex with texture coordinates
 	public void shgl_vertexf(PShape sh, float x, float y, float z){sh.vertex(x,y,z);}	 // vertex for shading or drawing
 	public void shgl_vertex(PShape sh, myPointf P){sh.vertex(P.x,P.y,P.z);}	 // vertex for shading or drawing
